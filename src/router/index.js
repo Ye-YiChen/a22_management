@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import UserManagement from '../views/UserManagement.vue'
-import ProductManagement from '../views/ProductManagement.vue'
+import ProductStoreManagement from '../views/ProductStoreManagement.vue'
+import ProductLoanManagement from '../views/ProductLoanManagement.vue'
 
 Vue.use(VueRouter)
 
@@ -19,7 +20,18 @@ const routes = [
 {
   path:'/product',
   name:'Product',
-  component:ProductManagement
+  redirect: '/product/store'
+
+},
+{
+  path:'/product/store',
+  name:'Store',
+  component:ProductStoreManagement
+},
+{
+  path:'/product/loan',
+  name:'Loan',
+  component:ProductLoanManagement
 }
 ]
 

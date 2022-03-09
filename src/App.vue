@@ -2,26 +2,42 @@
   <div id="app">
     <el-container>
       <el-aside width="200px">
-        <el-menu :default-openeds="['1']">
-          <router-link to="user" class="router" active-class="current"
+        <el-menu :default-openeds="['1','2']">
+          <router-link to="/user" class="router" active-class="current"
             ><el-menu-item index="1">
               <template slot="title"
                 ><i class="el-icon-user"></i>用户管理</template
               >
             </el-menu-item>
           </router-link>
-          <router-link to="product" class="router" active-class="current">
-            <el-menu-item index="2">
-              <template slot="title"
-                ><i class="el-icon-menu"></i>产品管理</template
+          <el-submenu index="2">
+            <template slot="title"
+              ><i class="el-icon-menu"></i>产品管理</template
+            >
+            <el-menu-item-group>
+              <router-link
+                to="/product/loan"
+                class="router"
+                active-class="current"
               >
-            </el-menu-item>
-          </router-link>
+                <el-menu-item index="2-1">贷款产品</el-menu-item>
+              </router-link>
+              <router-link
+                to="/product/store"
+                class="router"
+                active-class="current"
+              >
+                <el-menu-item index="2-2">存款产品</el-menu-item>
+              </router-link>
+            </el-menu-item-group>
+          </el-submenu>
         </el-menu>
       </el-aside>
       <el-container direction="vertical">
         <show-header />
-        <router-view />
+        <keep-alive>
+          <router-view />
+        </keep-alive>
       </el-container>
     </el-container>
   </div>
@@ -34,10 +50,10 @@ export default {
 };
 </script>
 <style lang="less">
-html{
+html {
   min-height: 100%;
 }
-body{
+body {
   min-height: calc(100% - 18px);
 }
 #app {
