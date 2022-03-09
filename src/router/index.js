@@ -1,21 +1,25 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-// import Header from '../views/Header'
-import UserManagement from '../views/UserManagement'
-import ProductManagement from '../views/ProductManagement'
+import UserManagement from '../views/UserManagement.vue'
+import ProductManagement from '../views/ProductManagement.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
 {
+  path:'/',
+  redirect: '/user'
+
+},
+  {
   path:'/user',
   name: 'User',
-  comments:UserManagement
+  component:UserManagement
 },
 {
   path:'/product',
   name:'Product',
-  comments:ProductManagement
+  component:ProductManagement
 }
 ]
 

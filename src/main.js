@@ -17,7 +17,8 @@ import {
   DropdownItem,
   Main,
   Table,
-  TableColumn } from 'element-ui';
+  TableColumn,
+  Empty } from 'element-ui';
 Vue.config.productionTip = false
 Vue.use(Button)
 Vue.use(Container)
@@ -33,6 +34,7 @@ Vue.use(DropdownItem)
 Vue.use(Main)
 Vue.use(Table)
 Vue.use(TableColumn)
+Vue.use(Empty)
 
 new Vue({
   router,
