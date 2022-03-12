@@ -25,7 +25,13 @@ import {
   Form,
   FormItem,
   Tag,
-  Loading
+  Loading,
+  Dialog,
+  Input,
+  Select,
+  Option,
+  InputNumber,
+  DatePicker
 } from 'element-ui';
 Vue.config.productionTip = false
 Vue.use(Button)
@@ -48,6 +54,12 @@ Vue.use(Form)
 Vue.use(FormItem)
 Vue.use(Tag)
 Vue.use(Loading)
+Vue.use(Dialog)
+Vue.use(Input)
+Vue.use(Select)
+Vue.use(Option)
+Vue.use(InputNumber)
+Vue.use(DatePicker)
 
 
 Vue.prototype.MessageBox = MessageBox

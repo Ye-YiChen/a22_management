@@ -17,10 +17,10 @@
               <span>{{ props.row.limited }}</span>
             </el-form-item>
             <el-form-item label="产品单价">
-              <span>{{ props.row.price }}</span>
+              <span>{{ props.row.price }}元</span>
             </el-form-item>
             <el-form-item label="年化利率">
-              <span>{{ props.row.num }}</span>
+              <span>{{ props.row.num }}%</span>
             </el-form-item>
             <el-form-item label="产品期限">
               <span>{{ props.row.term }}天</span>
@@ -48,7 +48,10 @@
       </el-table-column>
 
       <el-table-column prop="name" label="产品名称" width=""> </el-table-column>
-      <el-table-column sortable prop="price" label="产品单价" width="">
+      <el-table-column sortable label="产品单价" :sort-method="compare" >
+        <template slot-scope="scope">
+          <span> {{ scope.row.price }}元 </span>
+        </template>
       </el-table-column>
       <el-table-column sortable label="产品利率" :sort-method="compare">
         <template slot-scope="scope">
@@ -78,6 +81,103 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-dialog title="产品编辑" :visible.sync="dialogFormVisible">
+      <el-form
+        size="mini"
+        :model="form"
+        inline
+        label-width="auto"
+        label-position="left"
+        :rules="rules"
+      >
+        <el-form-item label="产品编号" prop="id">
+          <el-input v-model="form.id" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="产品名称" prop="name">
+          <el-input v-model="form.name" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="产品总数" prop="stock">
+          <el-input-number
+            :min="0"
+            v-model="form.stock"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="限购数量" prop="limited">
+          <el-input-number
+            :min="1"
+            v-model="form.limited"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="产品单价" prop="price">
+          <el-input-number
+            :min="0"
+            v-model="form.price"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="年化利率" prop="num">
+          <el-input-number
+            :precision="2"
+            :step="0.1"
+            v-model="form.num"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="产品期限" prop="term">
+          <el-input v-model="form.term" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="产品状态" prop="state">
+          <el-select v-model="form.state" autocomplete="off">
+            <el-option label="即将开始" value="before" />
+            <el-option label="正在进行" value="ing" />
+            <el-option label="已经结束" value="after" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="秒杀开始时间" prop="startTime">
+          <el-date-picker
+            type="datetime"
+            v-model="form.startTime"
+            autocomplete="off"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="秒杀结束时间" prop="endTime">
+          <el-date-picker
+            type="datetime"
+            v-model="form.endTime"
+            autocomplete="off"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="起息日时间" prop="startTime">
+          <el-date-picker
+            type="datetime"
+            v-model="form.startTime"
+            autocomplete="off"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="到期日时间" prop="endTime">
+          <el-date-picker
+            type="datetime"
+            v-model="form.endTime"
+            autocomplete="off"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="风险等级" prop="risk">
+          <el-select v-model="form.risk" autocomplete="off">
+            <el-option label="低风险" value="low" />
+            <el-option label="中风险" value="mid" />
+            <el-option label="高风险" value="high" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="dialogFormVisible = false"
+          >确 定</el-button
+        >
+      </div>
+    </el-dialog>
     <el-pagination
       :hide-on-single-page="true"
       background
@@ -92,11 +192,30 @@
 <script>
 export default {
   data() {
+    var checkExample = (rule, value, callback) => {
+      console.log(value);
+      if (!value) {
+        callback(new Error("hello"));
+      } else {
+        callback();
+      }
+    };
     return {
       tableData: [],
       currentRow: null,
       isPagination: false,
       isLoading: null,
+      dialogFormVisible: false,
+      form:{},
+
+      // 设置输入检测
+      rules: {
+        region: [
+          { required: true, message: "请输入活动名称", trigger: "blur" },
+          { min: 3, max: 5, message: "长度在 3 到 5 个字符", trigger: "blur" },
+        ],
+        name: [{ validator: checkExample, trigger: "blur" }],
+      },
     };
   },
   computed: {
@@ -109,9 +228,12 @@ export default {
   },
   methods: {
     handleDelete(index) {
-      this.tableData.splice(index,1)
+      this.tableData.splice(index, 1);
     },
-
+    handleEdit(index) {
+      this.dialogFormVisible = true;
+      this.form=this.tableData[index]
+    },
     filterHandler() {},
     formatState(value) {
       if (value == 1) {
@@ -155,7 +277,10 @@ export default {
 </script>
 
 <style scoped>
-.el-form-item span{
+.el-input {
+  width: auto;
+}
+.el-form-item span {
   font-weight: 700;
   padding-left: 8px;
 }
