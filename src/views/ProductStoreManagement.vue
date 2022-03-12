@@ -83,10 +83,8 @@
     </el-table>
     <el-dialog title="产品编辑" :visible.sync="dialogFormVisible">
       <el-form
-        size="mini"
         :model="form"
-        inline
-        label-width="auto"
+        label-width="100px"
         label-position="left"
         :rules="rules"
       >
