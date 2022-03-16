@@ -87,6 +87,7 @@
         label-width="100px"
         label-position="left"
         :rules="rules"
+        
       >
         <el-form-item label="产品编号" prop="id">
           <el-input v-model="form.id" autocomplete="off"></el-input>
@@ -249,12 +250,14 @@ export default {
     },
   },
   mounted() {
+    console.log(1);
     this.isLoading = true;
     this.axios({
       method: "get",
-      url: "/item/loan/list",
+      url: "/admin/item/list",
     })
       .then((response) => {
+        console.log(response);
         if (response.data.status != 0) {
           this.MessageBox.alert(response.data.message);
         } else {
