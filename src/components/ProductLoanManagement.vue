@@ -1,5 +1,8 @@
 <template>
   <el-main>
+    <el-button round type="primary" class="right" @click="addProduct()"
+      >新增产品</el-button
+    >
     <el-table :data="productData" v-if="!isEmpty" v-loading="isLoading">
       <el-table-column type="expand">
         <template slot-scope="props">
@@ -9,6 +12,9 @@
             </el-form-item>
             <el-form-item label="产品名称">
               <span>{{ props.row.name }}</span>
+            </el-form-item>
+            <el-form-item label="产品类型">
+              <span>{{ props.row.flag ? "贷款" : "存款" }}</span>
             </el-form-item>
             <el-form-item label="产品总数">
               <span>{{ props.row.stock }}</span>
@@ -32,13 +38,15 @@
               <span>{{ props.row.startTime }}</span>
             </el-form-item>
             <el-form-item label="秒杀结束时间">
-              <span>{{ props.row.startTime }}</span>
+              <span>{{ props.row.endTime }}</span>
             </el-form-item>
             <el-form-item label="起息日时间">
-              <span>{{ props.row.startTime }}</span>
+              <span>{{ props.row.numTime }}</span>
             </el-form-item>
             <el-form-item label="到期日时间">
-              <span>{{ props.row.startTime }}</span>
+              <span>{{
+                dateFormat(MoneyTime(props.row.numTime, props.row.term))
+              }}</span>
             </el-form-item>
             <el-form-item label="风险等级">
               <span>{{ props.row.risk }}</span>
@@ -47,7 +55,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="name" label="产品名称" width=""> </el-table-column>
+      <el-table-column prop="name" label="产品名称" > </el-table-column>
       <el-table-column sortable label="产品单价" :sort-method="compare">
         <template slot-scope="scope">
           <span> {{ scope.row.price }}元 </span>
@@ -81,7 +89,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog title="产品编辑" :visible.sync="dialogFormVisible">
+    <el-dialog title="产品编辑" :visible.sync="dialogFormVisible1">
       <el-form
         :model="form"
         label-width="100px"
@@ -89,7 +97,7 @@
         :rules="rules"
       >
         <el-form-item label="产品编号" prop="id">
-          <el-input v-model="form.id" autocomplete="off"></el-input>
+          <span>{{ form.id }}</span>
         </el-form-item>
         <el-form-item label="产品名称" prop="name">
           <el-input v-model="form.name" autocomplete="off"></el-input>
@@ -108,14 +116,14 @@
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
-        <el-form-item label="产品单价" prop="price">
+        <el-form-item label="产品单价 (元)" prop="price">
           <el-input-number
             :min="0"
             v-model="form.price"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
-        <el-form-item label="年化利率" prop="num">
+        <el-form-item label="年化利率 (%)" prop="num">
           <el-input-number
             :precision="2"
             :step="0.1"
@@ -123,8 +131,11 @@
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
-        <el-form-item label="产品期限" prop="term">
-          <el-input v-model="form.term" autocomplete="off"></el-input>
+        <el-form-item label="产品期限 (天)" prop="term">
+          <el-input-number
+            v-model="form.term"
+            autocomplete="off"
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="产品状态" prop="state">
           <el-select v-model="form.state" autocomplete="off">
@@ -147,19 +158,20 @@
             autocomplete="off"
           ></el-date-picker>
         </el-form-item>
-        <el-form-item label="起息日时间" prop="startTime">
+        <el-form-item label="起息日时间" prop="numTime">
           <el-date-picker
             type="datetime"
-            v-model="form.startTime"
+            v-model="form.numTime"
             autocomplete="off"
           ></el-date-picker>
         </el-form-item>
-        <el-form-item label="到期日时间" prop="endTime">
-          <el-date-picker
+        <el-form-item label="到期日时间" prop="numTime">
+          <!-- <el-date-picker
             type="datetime"
             v-model="form.endTime"
             autocomplete="off"
-          ></el-date-picker>
+          ></el-date-picker> -->
+          <span>{{ dateFormat(MoneyTime(form.numTime, form.term)) }}</span>
         </el-form-item>
         <el-form-item label="风险等级" prop="risk">
           <el-select v-model="form.risk" autocomplete="off">
@@ -174,6 +186,87 @@
         <el-button type="primary" @click="confirmEditInfo()">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="新增产品" :visible.sync="dialogFormVisible2">
+      <el-form
+        :model="form"
+        label-width="150px"
+        label-position="left"
+        :rules="rules"
+      >
+        <el-form-item label="产品名称" prop="name">
+          <el-input v-model="form.name" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="产品总数" prop="stock">
+          <el-input-number
+            :min="0"
+            v-model="form.stock"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="限购数量" prop="limited">
+          <el-input-number
+            :min="1"
+            v-model="form.limited"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="产品单价 (元)" prop="price">
+          <el-input-number
+            :min="0"
+            v-model="form.price"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="年化利率 (%)" prop="num">
+          <el-input-number
+            :precision="2"
+            :step="0.1"
+            v-model="form.num"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="产品期限 (天)" prop="term">
+          <el-input-number
+            v-model="form.term"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="秒杀开始时间" prop="startTime">
+          <el-date-picker
+            type="datetime"
+            v-model="form.startTime"
+            autocomplete="off"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="秒杀结束时间" prop="endTime">
+          <el-date-picker
+            type="datetime"
+            v-model="form.endTime"
+            autocomplete="off"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="起息日时间" prop="numTime">
+          <el-date-picker
+            type="datetime"
+            v-model="form.numTime"
+            autocomplete="off"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="风险等级" prop="risk">
+          <el-select v-model="form.risk" autocomplete="off">
+            <el-option label="低风险" value="low" />
+            <el-option label="中风险" value="mid" />
+            <el-option label="高风险" value="high" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelAddInfo()">取 消</el-button>
+        <el-button type="primary" @click="confirmAddInfo()">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 分页器 -->
     <el-pagination
       :hide-on-single-page="true"
       background
@@ -181,7 +274,6 @@
       :total="1"
     >
     </el-pagination>
-    <el-empty v-if="isEmpty" description="这里一条数据都没有呢"></el-empty>
   </el-main>
 </template>
 
@@ -190,28 +282,89 @@
 export default {
   data() {
     var checkExample = (rule, value, callback) => {
-      console.log(value);
+      // console.log(value);
       if (!value) {
-        callback(new Error("hello"));
+        callback(new Error("请输入产品名称"));
+      } else {
+        callback();
+      }
+    };
+    var checkDate = (rule, value, callback) => {
+      let dateTime = new Date();
+      dateTime = dateTime.setDate(dateTime.getDate() + 1);
+      if (!value) {
+        callback(new Error("请输入秒杀开始时间"));
+      } else if (new Date(value) < new Date(dateTime)) {
+        callback(new Error("秒杀开始时间至少提前一天"));
       } else {
         callback();
       }
     };
     return {
       tableData: [],
+      productData: [],
       currentRow: null,
       isPagination: false,
       isLoading: null,
-      dialogFormVisible: false,
+      dialogFormVisible1: false,
+      dialogFormVisible2: false,
       form: {},
       editIndex: null,
       // 设置输入检测
       rules: {
-        region: [
-          { required: true, message: "请输入活动名称", trigger: "blur" },
-          { min: 3, max: 5, message: "长度在 3 到 5 个字符", trigger: "blur" },
-        ],
-        name: [{ validator: checkExample, trigger: "blur" }],
+        name: [{ validator: checkExample, required: true, trigger: "blur" }],
+        stock: {
+          required: true,
+          message: "请输入产品总数",
+          min: 1,
+          trigger: "blur",
+        },
+        limited: {
+          required: true,
+          message: "请输入限购数量",
+          min: 1,
+          trigger: "blur",
+        },
+        price: {
+          required: true,
+          message: "请输入产品单价",
+          min: 1,
+          trigger: "blur",
+        },
+        num: {
+          required: true,
+          message: "请输入年化利率",
+          min: 0.01,
+          trigger: "blur",
+        },
+        term: {
+          required: true,
+          message: "请输入产品期限",
+          min: 1,
+          trigger: "blur",
+        },
+        state: { message: "请输入产品总数", min: 1, trigger: "blur" },
+        startTime: {
+          validator: checkDate,
+          required: true,
+          min: 1,
+          trigger: "blur",
+        },
+        endTime:{
+          required: true,
+          message: "请输入秒杀结束时间",
+          trigger: "blur",
+        },
+        numTime:{
+          required: true,
+          message: "请输入起息日时间",
+          trigger: "blur",
+        },
+        risk:{
+          required: true,
+          message: "请选择风险等级",
+          trigger: "blur",
+        }
       },
     };
   },
@@ -222,25 +375,20 @@ export default {
       }
       return false;
     },
-    productData() {
-      let temp = [];
-      for (let i of this.tableData) {
-        i.endTime = this.dateFormat(i.endTime);
-        i.numTime = this.dateFormat(i.numTime);
-        i.startTime = this.dateFormat(i.startTime);
-        if (i.state == 0) {
-          i.state = "即将开始";
-        } else if (i.state == 1) {
-          i.state = "已经结束";
-        } else if (i.state == 2) {
-          i.state = "正在进行";
-        }
-        temp.unshift(i);
-      }
-      return temp;
-    },
   },
   methods: {
+    addProduct() {
+      this.form = {
+        flag: 1,
+        state:0
+      };
+      this.dialogFormVisible2 = true;
+    },
+    MoneyTime(value, add) {
+      let time = new Date(value);
+      // console.log(time);
+      return time.setDate(time.getDate() + Number(add));
+    },
     handleDelete(index, info) {
       this.axios({
         method: "get",
@@ -255,6 +403,7 @@ export default {
             this.MessageBox.alert(response.data.data.message);
           } else {
             this.tableData.splice(index, 1);
+            this.productData.splice(index, 1);
             this.MessageBox.alert("删除成功！");
           }
         })
@@ -263,13 +412,23 @@ export default {
         });
     },
     handleEdit(index) {
-      this.dialogFormVisible = true;
+      this.dialogFormVisible1 = true;
       this.editIndex = index;
-      this.form = this.productData[index];
+      this.form = {
+        ...this.productData[index],
+      };
     },
     cancelEditInfo() {
-      this.dialogFormVisible = false;
-      this.productData[this.editIndex] = this.tableData[this.editIndex];
+      // console.log(this.form);
+
+      this.dialogFormVisible1 = false;
+      // 这里这样写 是为了深拷贝
+      /* for (let i in this.tableData[this.editIndex]) {
+        // console.log(i);
+        this.productData[this.editIndex][i] = this.tableData[this.editIndex][i];
+      } */
+      // 高端写法
+      this.productData[this.editIndex] = { ...this.tableData[this.editIndex] };
     },
     confirmEditInfo() {
       this.axios({
@@ -277,7 +436,13 @@ export default {
         url: "admin/item/update",
         params: {
           token: window.sessionStorage.getItem("token"),
-          ...this.productData[this.editIndex],
+          ...this.form,
+          state:
+            this.form.state == "即将开始"
+              ? 0
+              : this.form.state == "已经结束"
+              ? 1
+              : 2,
         },
       })
         .then((response) => {
@@ -286,7 +451,42 @@ export default {
             return false;
           } else {
             this.MessageBox.alert("修改成功！");
-            this.dialogFormVisible = false;
+            this.dialogFormVisible1 = false;
+            this.productData.splice(this.editIndex, 1);
+            this.tableData.splice(this.editIndex, 1);
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
+    },
+    cancelAddInfo() {
+      this.dialogFormVisible2 = false;
+    },
+    confirmAddInfo() {
+      this.axios({
+        method: "get",
+        url: "admin/item/add",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+          ...this.form,
+          state:
+            this.form.state == "即将开始"
+              ? 0
+              : this.form.state == "已经结束"
+              ? 1
+              : 2,
+        },
+      })
+        .then((response) => {
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+            return false;
+          } else {
+            this.MessageBox.alert("添加成功！");
+            this.dialogFormVisible2 = false;
+            this.productData.unshift(this.form);
+            this.tableData.unshift(this.form);
           }
         })
         .catch((err) => {
@@ -298,7 +498,7 @@ export default {
       if (value == "即将开始") {
         return "warning";
       } else if (value == "正在进行") {
-        return "before";
+        return "success";
       } else if (value == "已经结束") {
         return "danger";
       } else {
@@ -344,11 +544,26 @@ export default {
       },
     })
       .then((response) => {
-        console.log(response);
+        // console.log(response);
         if (response.data.status != 0) {
           this.MessageBox.alert(response.data.data.message);
         } else {
           this.tableData = response.data.data;
+          let temp = [];
+          for (let i of this.tableData) {
+            i.endTime = this.dateFormat(i.endTime);
+            i.numTime = this.dateFormat(i.numTime);
+            i.startTime = this.dateFormat(i.startTime);
+            if (i.state == 0) {
+              i.state = "即将开始";
+            } else if (i.state == 1) {
+              i.state = "已经结束";
+            } else if (i.state == 2) {
+              i.state = "正在进行";
+            }
+            temp.unshift(i);
+          }
+          this.productData = temp;
         }
         this.isLoading = false;
       })
@@ -365,6 +580,9 @@ export default {
 </script>
 
 <style scoped>
+.right {
+  float: right;
+}
 .el-input {
   width: auto;
 }
@@ -373,7 +591,7 @@ export default {
   padding-left: 8px;
 }
 .el-form-item__label {
-  width: 100px;
+  width: 200px;
 }
 .demo-table-expand {
   font-size: 0;

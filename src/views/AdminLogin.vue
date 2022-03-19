@@ -75,7 +75,7 @@ export default {
         },
       })
         .then((response) => {
-          console.log(response);
+          // console.log(response);
           if (response.data.status != 0) {
             this.dialogVisible = true;
             this.dialogMessage = response.data.data.message;
@@ -85,7 +85,7 @@ export default {
           }
         })
         .catch((err) => {
-          console.log(err);
+          // console.log(err);
           this.dialogVisible = true;
           this.dialogMessage = err.message;
         });

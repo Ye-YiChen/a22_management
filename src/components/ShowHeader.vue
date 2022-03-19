@@ -1,5 +1,5 @@
 <template>
-  <el-container class="header">
+  <el-container class="header" >
     <el-header style="text-align: right; font-size: 12px">
       <el-dropdown>
         <i class="el-icon-setting" style="margin-right: 15px"></i>
@@ -8,7 +8,7 @@
           <el-dropdown-item @click="AdminLogout()">注销</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
-      <span @click="AdminLogin()">{{ isLogin ? AdminName : "尚未登录" }}</span>
+      <span @click="AdminLogin()">{{ AdminName ? AdminName : "尚未登录" }}</span>
     </el-header>
   </el-container>
 </template>
@@ -17,16 +17,24 @@
 export default {
   data() {
     return {
-      isLogin: false,
       AdminName: null,
     };
   },
   methods: {
     AdminLogin() {
-      
+      this.goLogin()
     },
     AdminLogout() {},
   },
+  mounted(){
+    // this.axios({
+    //   method:'post',
+    //   url: requestUrl,
+    //   data: {
+    //     id:requestUrl
+    //   }
+    // })
+  }
 };
 </script>
 

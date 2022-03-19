@@ -45,6 +45,10 @@ export default {
   components: { ShowHeader },
   beforeRouteEnter: (to, from, next) => {
     document.body.style.background = "none";
+    if(!window.sessionStorage.getItem('token')){
+      this.goLogin()
+      return false
+    }
     next();
   },
 };
