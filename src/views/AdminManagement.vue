@@ -43,13 +43,14 @@
 import ShowHeader from "../components/ShowHeader.vue";
 export default {
   components: { ShowHeader },
+  beforeRouteEnter: (to, from, next) => {
+    document.body.style.background = "none";
+    next();
+  },
 };
 </script>
 
 <style scoped>
-body {
-  background-image: none;
-}
 .el-container {
   height: 100%;
   border: 1px solid #eee;

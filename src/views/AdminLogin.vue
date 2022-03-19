@@ -75,6 +75,7 @@ export default {
         },
       })
         .then((response) => {
+          console.log(response);
           if (response.data.status != 0) {
             this.dialogVisible = true;
             this.dialogMessage = response.data.data.message;
@@ -83,17 +84,23 @@ export default {
           }
         })
         .catch((err) => {
+          console.log(err);
           this.dialogVisible = true;
           this.dialogMessage = err.message;
         });
     },
+  },
+  beforeRouteEnter: (to, from, next) => {
+    document.body.style.backgroundImage =
+      "url(" + require("../../public/img/abgi.png") + ")";
+    next();
   },
 };
 </script>
 
 <style>
 body {
-  /* background-image: url("../../public/img/abgi.png"); */
+  background-image: url("../../public/img/abgi.png");
   /* background: no-repeat; */
   background-size: 100%;
   /* filter: blur(1px); */
@@ -178,6 +185,7 @@ input {
   border-radius: 3px;
   cursor: pointer;
   transition: 0.2s;
+  outline: none;
 }
 
 .login-btn:hover {

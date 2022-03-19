@@ -68,7 +68,7 @@ Vue.prototype.axios = axios;
 // axios基本设置
 // axios.defaults.baseURL = 'http://47.113.180.139:90'
 // 代理服务器 请求本地
-axios.defaults.baseURL = 'http://47.113.219.107:90/'
+axios.defaults.baseURL = 'http://47.113.180.139:90/'
 new Vue({
   router,
   store,
