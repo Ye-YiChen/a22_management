@@ -80,6 +80,7 @@ export default {
             this.dialogVisible = true;
             this.dialogMessage = response.data.data.message;
           } else {
+            window.sessionStorage.setItem('token',response.data.data)
             this.goManagement();
           }
         })

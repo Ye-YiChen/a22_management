@@ -1,6 +1,6 @@
 <template>
   <el-main>
-    <el-table :data="tableData" v-if="!isEmpty" v-loading="isLoading">
+    <el-table :data="productData" v-if="!isEmpty" v-loading="isLoading">
       <el-table-column type="expand">
         <template slot-scope="props">
           <el-form label-position="left" inline class="demo-table-expand">
@@ -26,7 +26,7 @@
               <span>{{ props.row.term }}天</span>
             </el-form-item>
             <el-form-item label="产品状态">
-              <span>{{ props.row.state }}</span>
+              <span>{{props.row.state }}</span>
             </el-form-item>
             <el-form-item label="秒杀开始时间">
               <span>{{ props.row.startTime }}</span>
@@ -48,7 +48,7 @@
       </el-table-column>
 
       <el-table-column prop="name" label="产品名称" width=""> </el-table-column>
-      <el-table-column sortable label="产品单价" :sort-method="compare" >
+      <el-table-column sortable label="产品单价" :sort-method="compare">
         <template slot-scope="scope">
           <span> {{ scope.row.price }}元 </span>
         </template>
@@ -58,7 +58,11 @@
           <span> {{ scope.row.num }}% </span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="startTime" label="秒杀开始时间">
+      <el-table-column
+        sortable
+        prop="startTime"
+        label="秒杀开始时间"
+      >
       </el-table-column>
       <el-table-column sortable prop="state" label="产品状态">
         <template slot-scope="scope">
@@ -87,7 +91,6 @@
         label-width="100px"
         label-position="left"
         :rules="rules"
-        
       >
         <el-form-item label="产品编号" prop="id">
           <el-input v-model="form.id" autocomplete="off"></el-input>
@@ -129,9 +132,9 @@
         </el-form-item>
         <el-form-item label="产品状态" prop="state">
           <el-select v-model="form.state" autocomplete="off">
-            <el-option label="即将开始" value="before" />
-            <el-option label="正在进行" value="ing" />
-            <el-option label="已经结束" value="after" />
+            <el-option label="即将开始" value="即将开始" />
+            <el-option label="正在进行" value="正在进行" />
+            <el-option label="已经结束" value="已经结束" />
           </el-select>
         </el-form-item>
         <el-form-item label="秒杀开始时间" prop="startTime">
@@ -205,7 +208,7 @@ export default {
       isPagination: false,
       isLoading: null,
       dialogFormVisible: false,
-      form:{},
+      form: {},
 
       // 设置输入检测
       rules: {
@@ -224,6 +227,23 @@ export default {
       }
       return false;
     },
+    productData() {
+      let temp=[];
+      for (let i of this.tableData) {
+        i.endTime = this.dateFormat(i.endTime);
+        i.numTime = this.dateFormat(i.numTime);
+        i.startTime = this.dateFormat(i.startTime)
+        if(i.state==0){
+          i.state='即将开始'
+        }else if(i.state==1){
+          i.state='已经结束'
+        }else if(i.state==2){
+          i.state='正在进行'
+        }
+        temp.unshift(i)
+      }
+      return temp
+    },
   },
   methods: {
     handleDelete(index) {
@@ -231,15 +251,15 @@ export default {
     },
     handleEdit(index) {
       this.dialogFormVisible = true;
-      this.form=this.tableData[index]
+      this.form = this.tableData[index];
     },
     filterHandler() {},
     formatState(value) {
-      if (value == 1) {
+      if (value == '即将开始') {
         return "warning";
-      } else if (value == 2) {
-        return "info";
-      } else if (value == 3) {
+      } else if (value == '正在进行') {
+        return "before";
+      } else if (value == '已经结束') {
         return "danger";
       } else {
         return "";
@@ -248,13 +268,40 @@ export default {
     compare(a, b) {
       return a - b;
     },
+    timeSize2(value) {
+      if (Number(value) < 0) {
+        value = -value;
+      }
+      if (String(value).length < 2) {
+        value = "0" + value;
+      } else if (String(value).length > 2) {
+        value = String(value).substr(0, 2);
+      }
+      return value;
+    },
+    dateFormat(value) {
+      var time = new Date(value);
+      return (
+        time.getFullYear(1) +
+        "-" +
+        this.timeSize2(Number(time.getMonth()) + 1) +
+        "-" +
+        this.timeSize2(time.getDate()) +
+        " " +
+        this.timeSize2(time.getHours()) +
+        ":" +
+        this.timeSize2(time.getSeconds())
+      );
+    },
   },
   mounted() {
-    console.log(1);
     this.isLoading = true;
     this.axios({
       method: "get",
-      url: "/admin/item/list",
+      url: "/admin/item/deposit",
+      params: {
+        token: window.sessionStorage.getItem("token"),
+      },
     })
       .then((response) => {
         console.log(response);

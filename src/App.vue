@@ -11,9 +11,11 @@ export default {
 </script>
 <style lang="less" scoped>
 html {
+  overflow-y: hidden;
   min-height: 100%;
 }
 body {
+  overflow-y: hidden;
   min-height: calc(100% - 18px);
 }
 #app {
@@ -23,5 +25,6 @@ body {
   text-align: center;
   color: #2c3e50;
   height: 100%;
+  overflow-y: hidden;
 }
 </style>

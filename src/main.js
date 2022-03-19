@@ -33,6 +33,7 @@ import {
   InputNumber,
   DatePicker
 } from 'element-ui';
+import minin from './assets/goRoute'
 Vue.config.productionTip = false
 Vue.use(Button)
 Vue.use(Container)
@@ -61,7 +62,7 @@ Vue.use(Option)
 Vue.use(InputNumber)
 Vue.use(DatePicker)
 
-
+Vue.mixin(minin)
 Vue.prototype.MessageBox = MessageBox
 Vue.prototype.axios = axios;
 // axios.defaults.withCredentials = true

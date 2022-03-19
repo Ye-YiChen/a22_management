@@ -30,23 +30,18 @@ const routes = [
         component: UserManagement
       },
       {
-        path: 'product',
-        name: 'Product',
-        redirect: '/management/product/store',
-        component:  ProductStoreManagement,
-        children: [
-          {
-            path: 'store',
-            name: 'Store',
-            component: ProductStoreManagement
-          },
-          {
-            path: 'loan',
-            name: 'Loan',
-            component: ProductLoanManagement
-          }
-        ]
+
+        path: 'product/store',
+        name: 'Store',
+        component: ProductStoreManagement
       },
+      {
+        path: 'product/loan',
+        name: 'Loan',
+        component: ProductLoanManagement
+      }
+
+
     ]
   },
 
