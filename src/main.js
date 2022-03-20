@@ -4,6 +4,7 @@ import './registerServiceWorker'
 import router from './router'
 import store from './store'
 import axios from 'axios'
+import dayjs from 'dayjs'
 import {
   Button,
   Container,
@@ -63,6 +64,8 @@ Vue.use(InputNumber)
 Vue.use(DatePicker)
 
 Vue.mixin(minin)
+Vue.prototype.dayjs = dayjs
+
 Vue.prototype.MessageBox = MessageBox
 Vue.prototype.axios = axios;
 // axios.defaults.withCredentials = true
