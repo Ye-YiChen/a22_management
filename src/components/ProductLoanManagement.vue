@@ -55,7 +55,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="name" label="产品名称" > </el-table-column>
+      <el-table-column prop="name" label="产品名称"> </el-table-column>
       <el-table-column sortable label="产品单价" :sort-method="compare">
         <template slot-scope="scope">
           <span> {{ scope.row.price }}元 </span>
@@ -127,12 +127,14 @@
           <el-input-number
             :precision="2"
             :step="0.1"
+            :min="0.0"
             v-model="form.num"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
         <el-form-item label="产品期限 (天)" prop="term">
           <el-input-number
+            :min="0"
             v-model="form.term"
             autocomplete="off"
           ></el-input-number>
@@ -220,6 +222,7 @@
         <el-form-item label="年化利率 (%)" prop="num">
           <el-input-number
             :precision="2"
+            :min="0"
             :step="0.1"
             v-model="form.num"
             autocomplete="off"
@@ -228,6 +231,7 @@
         <el-form-item label="产品期限 (天)" prop="term">
           <el-input-number
             v-model="form.term"
+            :min="0"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
@@ -293,9 +297,9 @@ export default {
       let dateTime = new Date();
       dateTime = dateTime.setDate(dateTime.getDate() + 1);
       if (!value) {
-        callback(new Error("请输入秒杀开始时间"));
+        callback(new Error("请选择时间"));
       } else if (new Date(value) < new Date(dateTime)) {
-        callback(new Error("秒杀开始时间至少提前一天"));
+        callback(new Error("时间请至少提前一天"));
       } else {
         callback();
       }
@@ -316,7 +320,6 @@ export default {
         stock: {
           required: true,
           message: "请输入产品总数",
-          min: 1,
           trigger: "blur",
         },
         limited: {
@@ -343,28 +346,30 @@ export default {
           min: 1,
           trigger: "blur",
         },
-        state: { message: "请输入产品总数", min: 1, trigger: "blur" },
+        // state: { message: "请输入产品总数", min: 1, trigger: "blur" },
         startTime: {
           validator: checkDate,
           required: true,
           min: 1,
           trigger: "blur",
         },
-        endTime:{
+        endTime: {
           required: true,
-          message: "请输入秒杀结束时间",
+          validator: checkDate,
+          // message: "请输入起息日时间",
           trigger: "blur",
         },
-        numTime:{
+        numTime: {
           required: true,
-          message: "请输入起息日时间",
+          validator: checkDate,
+          // message: "请输入起息日时间",
           trigger: "blur",
         },
-        risk:{
+        risk: {
           required: true,
           message: "请选择风险等级",
           trigger: "blur",
-        }
+        },
       },
     };
   },
@@ -380,7 +385,7 @@ export default {
     addProduct() {
       this.form = {
         flag: 1,
-        state:0
+        state: 0,
       };
       this.dialogFormVisible2 = true;
     },
@@ -443,6 +448,12 @@ export default {
               : this.form.state == "已经结束"
               ? 1
               : 2,
+          numTime: null,
+          numTime1: this.dayjs(this.form.numTime).format('YYYY-MM-DD HH:mm:ss'),
+          startTime: null,
+          startTime1: this.dayjs(this.form.startTime).format('YYYY-MM-DD HH:mm:ss'),
+          endTime: null,
+          endTime1: this.dayjs(this.form.endTime).format('YYYY-MM-DD HH:mm:ss'),
         },
       })
         .then((response) => {
@@ -464,6 +475,7 @@ export default {
       this.dialogFormVisible2 = false;
     },
     confirmAddInfo() {
+      // console.log(new Date(this.form.numTime).format());
       this.axios({
         method: "get",
         url: "admin/item/add",
@@ -476,11 +488,22 @@ export default {
               : this.form.state == "已经结束"
               ? 1
               : 2,
+          numTime: null,
+          numTime1: this.dayjs(this.form.numTime).format('YYYY-MM-DD HH:mm:ss'),
+          startTime: null,
+          startTime1: this.dayjs(this.form.startTime).format('YYYY-MM-DD HH:mm:ss'),
+          endTime: null,
+          endTime1: this.dayjs(this.form.endTime).format('YYYY-MM-DD HH:mm:ss'),
         },
       })
         .then((response) => {
           if (response.data.status != 0) {
-            this.MessageBox.alert(response.data.data.message);
+            if (response.data.data.message) {
+              this.MessageBox.alert(response.data.data.message);
+            } else {
+              this.MessageBox.alert(response.data.data);
+            }
+
             return false;
           } else {
             this.MessageBox.alert("添加成功！");
