@@ -35,13 +35,13 @@
               <span>{{ props.row.state }}</span>
             </el-form-item>
             <el-form-item label="秒杀开始时间">
-              <span>{{ props.row.startTime }}</span>
+              <span>{{ dateFormat(props.row.startTime) }}</span>
             </el-form-item>
             <el-form-item label="秒杀结束时间">
-              <span>{{ props.row.endTime }}</span>
+              <span>{{ dateFormat(props.row.endTime) }}</span>
             </el-form-item>
             <el-form-item label="起息日时间">
-              <span>{{ props.row.numTime }}</span>
+              <span>{{ dateFormat(props.row.numTime) }}</span>
             </el-form-item>
             <el-form-item label="到期日时间">
               <span>{{
@@ -66,7 +66,10 @@
           <span> {{ scope.row.num }}% </span>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="startTime" label="秒杀开始时间">
+      <el-table-column sortable  label="秒杀开始时间">
+      <template slot-scope="scope">
+          <span> {{ dateFormat(scope.row.startTime )}} </span>
+        </template>
       </el-table-column>
       <el-table-column sortable prop="state" label="产品状态">
         <template slot-scope="scope">
@@ -105,21 +108,21 @@
         <el-form-item label="产品总数" prop="stock">
           <el-input-number
             :min="0"
-            v-model="form.stock"
+            v-model.number="form.stock"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
         <el-form-item label="限购数量" prop="limited">
           <el-input-number
             :min="1"
-            v-model="form.limited"
+            v-model.number="form.limited"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
         <el-form-item label="产品单价 (元)" prop="price">
           <el-input-number
             :min="0"
-            v-model="form.price"
+            v-model.number="form.price"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
@@ -128,14 +131,14 @@
             :precision="2"
             :step="0.1"
             :min="0.0"
-            v-model="form.num"
+            v-model.number="form.num"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
         <el-form-item label="产品期限 (天)" prop="term">
           <el-input-number
             :min="0"
-            v-model="form.term"
+            v-model.number="form.term"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
@@ -325,32 +328,32 @@ export default {
         limited: {
           required: true,
           message: "请输入限购数量",
-          min: 1,
+          // min: 1,
           trigger: "blur",
         },
         price: {
           required: true,
           message: "请输入产品单价",
-          min: 1,
+          // min: 1,
           trigger: "blur",
         },
         num: {
           required: true,
           message: "请输入年化利率",
-          min: 0.01,
+          // min: 0.01,
           trigger: "blur",
         },
         term: {
           required: true,
           message: "请输入产品期限",
-          min: 1,
+          // min: 1,
           trigger: "blur",
         },
         // state: { message: "请输入产品总数", min: 1, trigger: "blur" },
         startTime: {
           validator: checkDate,
           required: true,
-          min: 1,
+          // min: 1,
           trigger: "blur",
         },
         endTime: {
@@ -385,7 +388,7 @@ export default {
     addProduct() {
       this.form = {
         flag: 1,
-        state: 0,
+        state: "即将开始",
       };
       this.dialogFormVisible2 = true;
     },
@@ -449,22 +452,36 @@ export default {
               ? 1
               : 2,
           numTime: null,
-          numTime1: this.dayjs(this.form.numTime).format('YYYY-MM-DD HH:mm:ss'),
+          numTime1: this.dayjs(this.form.numTime).format("YYYY-MM-DD HH:mm:ss"),
           startTime: null,
-          startTime1: this.dayjs(this.form.startTime).format('YYYY-MM-DD HH:mm:ss'),
+          startTime1: this.dayjs(this.form.startTime).format(
+            "YYYY-MM-DD HH:mm:ss"
+          ),
           endTime: null,
-          endTime1: this.dayjs(this.form.endTime).format('YYYY-MM-DD HH:mm:ss'),
+          endTime1: this.dayjs(this.form.endTime).format("YYYY-MM-DD HH:mm:ss"),
         },
       })
         .then((response) => {
           if (response.data.status != 0) {
-            this.MessageBox.alert(response.data.data.message);
+            this.MessageBox.alert(response.data.data);
             return false;
           } else {
             this.MessageBox.alert("修改成功！");
             this.dialogFormVisible1 = false;
-            this.productData.splice(this.editIndex, 1);
-            this.tableData.splice(this.editIndex, 1);
+            // this.productData.splice(this.editIndex, 1);
+            // this.tableData.splice(this.editIndex, 1);
+            // this.productData[this.editIndex] = this.form;
+            this.$set(this.productData, this.editIndex, this.form);
+            this.productData[this.editIndex].startTime=this.dateFormat(this.form.startTime)
+            this.tableData[this.editIndex] = {
+              ...this.form,
+              state:
+                this.form.state == "即将开始"
+                  ? 0
+                  : this.form.state == "已经结束"
+                  ? 1
+                  : 2,
+            };
           }
         })
         .catch((err) => {
@@ -489,11 +506,13 @@ export default {
               ? 1
               : 2,
           numTime: null,
-          numTime1: this.dayjs(this.form.numTime).format('YYYY-MM-DD HH:mm:ss'),
+          numTime1: this.dayjs(this.form.numTime).format("YYYY-MM-DD HH:mm:ss"),
           startTime: null,
-          startTime1: this.dayjs(this.form.startTime).format('YYYY-MM-DD HH:mm:ss'),
+          startTime1: this.dayjs(this.form.startTime).format(
+            "YYYY-MM-DD HH:mm:ss"
+          ),
           endTime: null,
-          endTime1: this.dayjs(this.form.endTime).format('YYYY-MM-DD HH:mm:ss'),
+          endTime1: this.dayjs(this.form.endTime).format("YYYY-MM-DD HH:mm:ss"),
         },
       })
         .then((response) => {
@@ -508,8 +527,17 @@ export default {
           } else {
             this.MessageBox.alert("添加成功！");
             this.dialogFormVisible2 = false;
+            console.log(this.form);
             this.productData.unshift(this.form);
             this.tableData.unshift(this.form);
+            this.tableData[0] = {
+              state:
+                this.form.state == "即将开始"
+                  ? 0
+                  : this.form.state == "已经结束"
+                  ? 1
+                  : 2,
+            };
           }
         })
         .catch((err) => {
