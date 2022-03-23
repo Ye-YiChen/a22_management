@@ -291,15 +291,29 @@
     </el-dialog>
     <el-dialog title="规则配置" :visible.sync="dialogFormVisible3">
       <el-form
-        :model="setting"
+        :model="ruleForm"
         label-width="150px"
         label-position="left"
         :rules="rules"
       >
         <el-form-item label="年龄" prop="age">
+          <el-select
+            v-model="ruleForm.ageSelect"
+            placeholder="请选择"
+            size="small"
+          >
+            <el-option label="小于等于" value="smaller"></el-option>
+            <el-option label="大于等于" value="bigger"> </el-option>
+
+            <!-- <el-option
+              :label="item.label"
+              :value="item.value"
+            >
+            </el-option> -->
+          </el-select>
           <el-input-number
             :min="1"
-            v-model="form.age"
+            v-model="ruleForm.age"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
@@ -307,7 +321,7 @@
           <el-cascader
             size="large"
             :options="options"
-            v-model="area"
+            v-model="ruleForm.area"
             @change="handleChange"
             multiple
           >
@@ -318,15 +332,31 @@
             autocomplete="off"
           ></el-input-number> -->
         </el-form-item>
-        <el-form-item label="现有资产" prop="money">
+        <el-form-item label="现有资产（万元）" prop="money">
+          <el-select
+            v-model="ruleForm.moneySelect"
+            placeholder="请选择"
+            size="small"
+          >
+            <el-option label="小于等于" value="smaller"></el-option>
+            <el-option label="大于等于" value="bigger"> </el-option>
+
+            <!-- <el-option
+              :label="item.label"
+              :value="item.value"
+            >
+            </el-option> -->
+          </el-select>
           <el-input-number
-            :min="1"
-            v-model="form.money"
+            :min="0"
+            :precision="2"
+            :step="0.01"
+            v-model="ruleForm.money"
             autocomplete="off"
           ></el-input-number>
         </el-form-item>
         <el-form-item label="VIP" prop="vip">
-          <el-checkbox-group v-model="checkList">
+          <el-checkbox-group v-model="ruleForm.VIPList">
             <el-checkbox-button label="大众会员"></el-checkbox-button>
             <el-checkbox-button label="黄金会员"></el-checkbox-button>
             <el-checkbox-button label="白金会员"></el-checkbox-button>
@@ -334,7 +364,7 @@
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="职业" prop="job">
-          <el-input v-model="form.job" autocomplete="off"></el-input>
+          <el-input v-model="ruleForm.job" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -380,20 +410,25 @@ export default {
       }
     };
     return {
-      tableData: [],
-      productData: [],
-      currentRow: null,
+      tableData: [], // 直接获取的数据
+      productData: [], // 处理后展示的数据
+      currentRow: null, //
       isPagination: false,
       isLoading: null,
       dialogFormVisible1: false,
       dialogFormVisible2: false,
       dialogFormVisible3: false,
       editIndex: null,
-      checkList: [],
+      ruleForm: {
+        VIPList: [],
+        moneySelect: "",
+        ageSelect: "",
+        area: {},
+        job: "",
+      },
       form: {},
       options: provinceAndCityData,
-      area: {},
-      setting:{},
+
       // 设置输入检测
       rules: {
         name: [{ validator: checkExample, required: true, trigger: "blur" }],
@@ -462,12 +497,22 @@ export default {
     },
   },
   methods: {
+    emptyRuleForm() {
+      this.ruleForm = {
+        VIPList: [],
+        moneySelect: "",
+        ageSelect: "",
+        area: {},
+        job: "",
+      };
+    },
     handleChange() {
       let loc = "";
-      for (let i = 0; i < this.area.length; i++) {
-        loc += CodeToText[this.area];
-      }
-      alert(loc);
+      if (this.ruleForm.area)
+        for (let i = 0; i < this.ruleForm.area.length; i++) {
+          loc += CodeToText[this.ruleForm.area[i]];
+          console.log(loc);
+        }
     },
     ruleEdit(index) {
       this.dialogFormVisible3 = true;
@@ -476,8 +521,13 @@ export default {
         ...this.productData[index],
       };
     },
-    cancelRuleInfo() {},
-    confirmRuleInfo() {},
+    cancelRuleInfo() {
+      this.dialogFormVisible3 = false;
+      this.emptyRuleForm()
+    },
+    confirmRuleInfo() {
+      console.log(this.ruleForm);
+    },
     addProduct() {
       this.form = {
         flag: 1,
@@ -727,6 +777,10 @@ export default {
 </script>
 
 <style >
+.el-select {
+  width: 120px;
+  margin-right: 10px;
+}
 .el-checkbox-button {
   padding: 0;
 }
@@ -753,7 +807,7 @@ export default {
   font-size: 0;
 }
 .demo-table-expand label {
-  width: 90px;
+  width: 120px;
   color: #99a9bf;
 }
 .demo-table-expand .el-form-item {
