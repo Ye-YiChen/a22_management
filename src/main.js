@@ -32,7 +32,10 @@ import {
   Select,
   Option,
   InputNumber,
-  DatePicker
+  DatePicker,
+  Cascader,
+  CheckboxButton,
+  CheckboxGroup
 } from 'element-ui';
 import minin from './assets/goRoute'
 Vue.config.productionTip = false
@@ -62,6 +65,10 @@ Vue.use(Select)
 Vue.use(Option)
 Vue.use(InputNumber)
 Vue.use(DatePicker)
+Vue.use(Cascader)
+Vue.use(CheckboxButton)
+Vue.use(CheckboxGroup)
+
 
 Vue.mixin(minin)
 Vue.prototype.dayjs = dayjs

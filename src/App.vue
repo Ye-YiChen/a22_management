@@ -11,7 +11,6 @@ export default {
 </script>
 <style lang="less" scoped>
 html {
-  overflow-y: hidden;
   min-height: 100%;
 }
 body {

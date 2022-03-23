@@ -66,9 +66,9 @@
           <span> {{ scope.row.num }}% </span>
         </template>
       </el-table-column>
-      <el-table-column sortable  label="秒杀开始时间">
-      <template slot-scope="scope">
-          <span> {{ dateFormat(scope.row.startTime )}} </span>
+      <el-table-column sortable label="秒杀开始时间">
+        <template slot-scope="scope">
+          <span> {{ dateFormat(scope.row.startTime) }} </span>
         </template>
       </el-table-column>
       <el-table-column sortable prop="state" label="产品状态">
@@ -78,24 +78,41 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column prop="state" label="规则配置">
+        <template slot-scope="scope">
+          <el-button
+            size="small"
+            type="primary"
+            round
+            plain
+            @click="ruleEdit(scope.$index, scope.row)"
+            >配置规则</el-button
+          >
+        </template>
+      </el-table-column>
       <el-table-column fixed="right" label="操作" width="150">
         <template slot-scope="scope">
-          <el-button size="mini" @click="handleEdit(scope.$index, scope.row)"
-            >编辑</el-button
-          >
           <el-button
-            size="mini"
+            size="medium"
+            circle
+            type="info"
+            @click="handleEdit(scope.$index, scope.row)"
+            icon="el-icon-edit"
+          ></el-button>
+          <el-button
+            size="medium"
             type="danger"
             @click="handleDelete(scope.$index, scope.row)"
-            >删除</el-button
-          >
+            circle
+            icon="el-icon-delete"
+          ></el-button>
         </template>
       </el-table-column>
     </el-table>
     <el-dialog title="产品编辑" :visible.sync="dialogFormVisible1">
       <el-form
         :model="form"
-        label-width="100px"
+        label-width="150px"
         label-position="left"
         :rules="rules"
       >
@@ -191,7 +208,7 @@
         <el-button type="primary" @click="confirmEditInfo()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="新增产品" :visible.sync="dialogFormVisible2">
+    <el-dialog title="产品新增" :visible.sync="dialogFormVisible2">
       <el-form
         :model="form"
         label-width="150px"
@@ -272,6 +289,59 @@
         <el-button type="primary" @click="confirmAddInfo()">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="规则配置" :visible.sync="dialogFormVisible3">
+      <el-form
+        :model="setting"
+        label-width="150px"
+        label-position="left"
+        :rules="rules"
+      >
+        <el-form-item label="年龄" prop="age">
+          <el-input-number
+            :min="1"
+            v-model="form.age"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="地区" prop="area">
+          <el-cascader
+            size="large"
+            :options="options"
+            v-model="area"
+            @change="handleChange"
+            multiple
+          >
+          </el-cascader>
+          <!-- <el-input-number
+            :min="0"
+            v-model="form.stock"
+            autocomplete="off"
+          ></el-input-number> -->
+        </el-form-item>
+        <el-form-item label="现有资产" prop="money">
+          <el-input-number
+            :min="1"
+            v-model="form.money"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="VIP" prop="vip">
+          <el-checkbox-group v-model="checkList">
+            <el-checkbox-button label="大众会员"></el-checkbox-button>
+            <el-checkbox-button label="黄金会员"></el-checkbox-button>
+            <el-checkbox-button label="白金会员"></el-checkbox-button>
+            <el-checkbox-button label="钻石会员"></el-checkbox-button>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="职业" prop="job">
+          <el-input v-model="form.job" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelRuleInfo()">取 消</el-button>
+        <el-button type="primary" @click="confirmRuleInfo()">确 定</el-button>
+      </div>
+    </el-dialog>
 
     <!-- 分页器 -->
     <el-pagination
@@ -286,6 +356,8 @@
 
 <script>
 // import { MessageBox } from "element-ui";
+// Vue.use(Cascader)
+import { provinceAndCityData, CodeToText } from "element-china-area-data";
 export default {
   data() {
     var checkExample = (rule, value, callback) => {
@@ -315,8 +387,13 @@ export default {
       isLoading: null,
       dialogFormVisible1: false,
       dialogFormVisible2: false,
-      form: {},
+      dialogFormVisible3: false,
       editIndex: null,
+      checkList: [],
+      form: {},
+      options: provinceAndCityData,
+      area: {},
+      setting:{},
       // 设置输入检测
       rules: {
         name: [{ validator: checkExample, required: true, trigger: "blur" }],
@@ -385,6 +462,22 @@ export default {
     },
   },
   methods: {
+    handleChange() {
+      let loc = "";
+      for (let i = 0; i < this.area.length; i++) {
+        loc += CodeToText[this.area];
+      }
+      alert(loc);
+    },
+    ruleEdit(index) {
+      this.dialogFormVisible3 = true;
+      this.editIndex = index;
+      this.form = {
+        ...this.productData[index],
+      };
+    },
+    cancelRuleInfo() {},
+    confirmRuleInfo() {},
     addProduct() {
       this.form = {
         flag: 1,
@@ -472,7 +565,9 @@ export default {
             // this.tableData.splice(this.editIndex, 1);
             // this.productData[this.editIndex] = this.form;
             this.$set(this.productData, this.editIndex, this.form);
-            this.productData[this.editIndex].startTime=this.dateFormat(this.form.startTime)
+            this.productData[this.editIndex].startTime = this.dateFormat(
+              this.form.startTime
+            );
             this.tableData[this.editIndex] = {
               ...this.form,
               state:
@@ -586,6 +681,7 @@ export default {
     },
   },
   mounted() {
+    document.getElementsByTagName("html")[0].style.overflowY = "auto";
     this.isLoading = true;
     this.axios({
       method: "get",
@@ -630,7 +726,13 @@ export default {
 };
 </script>
 
-<style scoped>
+<style >
+.el-checkbox-button {
+  padding: 0;
+}
+.el-cascader-menu {
+  height: 300px;
+}
 .right {
   float: right;
 }
@@ -643,6 +745,9 @@ export default {
 }
 .el-form-item__label {
   width: 200px;
+}
+.el-form-item__content {
+  margin: 0;
 }
 .demo-table-expand {
   font-size: 0;
