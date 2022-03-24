@@ -296,57 +296,32 @@
         label-position="left"
         :rules="rules"
       >
-        <el-form-item label="年龄" prop="age">
+        <el-form-item label="年龄（岁）" prop="age">
           <el-select
-            v-model="ruleForm.ageSelect"
+            v-model="ruleForm.age"
             placeholder="请选择"
             size="small"
           >
-            <el-option label="小于等于" value="smaller"></el-option>
-            <el-option label="大于等于" value="bigger"> </el-option>
-
-            <!-- <el-option
-              :label="item.label"
-              :value="item.value"
-            >
-            </el-option> -->
+            <el-option label="全部" value="全部"> </el-option>
+            <el-option label="18-28" value="smaller"></el-option>
+            <el-option label="29-40" value="bigger"> </el-option>
+            <el-option label="41-65" value="bigger"> </el-option>
+            <el-option label="65以上" value="bigger"> </el-option>
           </el-select>
-          <el-input-number
-            :min="1"
-            v-model="ruleForm.age"
-            autocomplete="off"
-          ></el-input-number>
         </el-form-item>
         <el-form-item label="地区" prop="area">
           <el-cascader
-            size="large"
+            size="small"
             :options="options"
             v-model="ruleForm.area"
             @change="handleChange"
             multiple
           >
           </el-cascader>
-          <!-- <el-input-number
-            :min="0"
-            v-model="form.stock"
-            autocomplete="off"
-          ></el-input-number> -->
         </el-form-item>
         <el-form-item label="现有资产（万元）" prop="money">
-          <el-select
-            v-model="ruleForm.moneySelect"
-            placeholder="请选择"
-            size="small"
-          >
-            <el-option label="小于等于" value="smaller"></el-option>
-            <el-option label="大于等于" value="bigger"> </el-option>
+          <span style="margin-right: 10px">不低于 </span>
 
-            <!-- <el-option
-              :label="item.label"
-              :value="item.value"
-            >
-            </el-option> -->
-          </el-select>
           <el-input-number
             :min="0"
             :precision="2"
@@ -356,15 +331,26 @@
           ></el-input-number>
         </el-form-item>
         <el-form-item label="VIP" prop="vip">
-          <el-checkbox-group v-model="ruleForm.VIPList">
-            <el-checkbox-button label="大众会员"></el-checkbox-button>
-            <el-checkbox-button label="黄金会员"></el-checkbox-button>
-            <el-checkbox-button label="白金会员"></el-checkbox-button>
-            <el-checkbox-button label="钻石会员"></el-checkbox-button>
-          </el-checkbox-group>
+          <span style="margin-right: 10px">不低于 </span>
+          <el-select
+            v-model="ruleForm.VIP"
+            placeholder="请选择"
+            size="small"
+          >
+            <el-option label="大众会员" value="0"> </el-option>
+            <el-option label="黄金会员" value="1"></el-option>
+            <el-option label="白金会员" value="2"> </el-option>
+            <el-option label="钻石会员" value="3"> </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="职业" prop="job">
-          <el-input v-model="ruleForm.job" autocomplete="off"></el-input>
+          <el-select v-model="ruleForm.job" placeholder="请选择" size="small">
+            <el-option label="不限" value="不限"> </el-option>
+            <el-option label="无业" value="无业"> </el-option>
+            <el-option label="学生" value="学生"></el-option>
+            <el-option label="老师" value="老师"> </el-option>
+            <el-option label="农民" value="农民"> </el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -420,14 +406,14 @@ export default {
       dialogFormVisible3: false,
       editIndex: null,
       ruleForm: {
-        VIPList: [],
-        moneySelect: "",
-        ageSelect: "",
+        VIP: "",
+        age: "",
         area: {},
         job: "",
+        money:"",
       },
       form: {},
-      options: provinceAndCityData,
+      options: [{ label: "不限", value: "不限" }, ...provinceAndCityData],
 
       // 设置输入检测
       rules: {
@@ -499,20 +485,27 @@ export default {
   methods: {
     emptyRuleForm() {
       this.ruleForm = {
-        VIPList: [],
-        moneySelect: "",
-        ageSelect: "",
+        VIP: "",
+        age: "",
         area: {},
         job: "",
+        money:'',
       };
     },
     handleChange() {
-      let loc = "";
-      if (this.ruleForm.area)
+      let temp = "";
+      if (this.ruleForm.area) {
         for (let i = 0; i < this.ruleForm.area.length; i++) {
-          loc += CodeToText[this.ruleForm.area[i]];
-          console.log(loc);
+          if (this.ruleForm.area[i] == "不限") {
+            temp += "不限";
+            break;
+          } else {
+            temp +=
+              CodeToText[this.ruleForm.area[i]];
+          }
         }
+      }
+      this.ruleForm.area=temp;
     },
     ruleEdit(index) {
       this.dialogFormVisible3 = true;
@@ -523,10 +516,30 @@ export default {
     },
     cancelRuleInfo() {
       this.dialogFormVisible3 = false;
-      this.emptyRuleForm()
+      this.emptyRuleForm();
     },
     confirmRuleInfo() {
       console.log(this.ruleForm);
+      this.axios({
+        method:'get',
+        url: '/admin/item/rule',
+        params: {
+          itemId:this.tableData[this.editIndex].id,
+          itemName:this.tableData[this.editIndex].name,
+          ...this.ruleForm,
+          age:0
+        }
+      }).then((response) => {
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+          } else {
+            console.log(1);
+            this.emptyRuleForm()
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
     },
     addProduct() {
       this.form = {

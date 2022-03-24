@@ -35,7 +35,9 @@ import {
   DatePicker,
   Cascader,
   CheckboxButton,
-  CheckboxGroup
+  CheckboxGroup,
+  CollapseItem,
+  Collapse
 } from 'element-ui';
 import minin from './assets/goRoute'
 Vue.config.productionTip = false
@@ -68,6 +70,8 @@ Vue.use(DatePicker)
 Vue.use(Cascader)
 Vue.use(CheckboxButton)
 Vue.use(CheckboxGroup)
+Vue.use(CollapseItem)
+Vue.use(Collapse)
 
 
 Vue.mixin(minin)
@@ -77,9 +81,9 @@ Vue.prototype.MessageBox = MessageBox
 Vue.prototype.axios = axios;
 // axios.defaults.withCredentials = true
 // axios基本设置
-// axios.defaults.baseURL = 'http://47.113.180.139:90'
+axios.defaults.baseURL = 'http://47.113.180.139:8080'
 // 代理服务器 请求本地
-axios.defaults.baseURL = 'http://47.113.224.43:90/'
+// axios.defaults.baseURL = 'http://47.113.224.43:90/'
 new Vue({
   router,
   store,
