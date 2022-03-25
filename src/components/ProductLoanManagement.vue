@@ -109,7 +109,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog title="产品编辑" :visible.sync="dialogFormVisible1">
+    <el-dialog title="产品编辑" :visible.sync="dialogFormVisible1" width="50%">
       <el-form
         :model="form"
         label-width="150px"
@@ -296,19 +296,17 @@
         label-position="left"
         :rules="rules"
       >
-        <el-form-item label="年龄（岁）" prop="age">
-          <el-select
-            v-model="ruleForm.age"
-            placeholder="请选择"
-            size="small"
-          >
+        <!-- 这里是一个 年龄选择器 可能后来话需要 -->
+        <!-- <el-form-item label="年龄（岁）" prop="age">
+          <el-select v-model="ruleForm.age" placeholder="请选择" size="small">
             <el-option label="全部" value="全部"> </el-option>
             <el-option label="18-28" value="smaller"></el-option>
             <el-option label="29-40" value="bigger"> </el-option>
             <el-option label="41-65" value="bigger"> </el-option>
             <el-option label="65以上" value="bigger"> </el-option>
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
+
         <el-form-item label="地区" prop="area">
           <el-cascader
             size="small"
@@ -332,11 +330,7 @@
         </el-form-item>
         <el-form-item label="VIP" prop="vip">
           <span style="margin-right: 10px">不低于 </span>
-          <el-select
-            v-model="ruleForm.VIP"
-            placeholder="请选择"
-            size="small"
-          >
+          <el-select v-model="ruleForm.vip" placeholder="请选择" size="small">
             <el-option label="大众会员" value="0"> </el-option>
             <el-option label="黄金会员" value="1"></el-option>
             <el-option label="白金会员" value="2"> </el-option>
@@ -373,7 +367,11 @@
 <script>
 // import { MessageBox } from "element-ui";
 // Vue.use(Cascader)
-import { provinceAndCityData, CodeToText } from "element-china-area-data";
+import {
+  regionData,
+  // CodeToText,
+  // TextToCode,
+} from "element-china-area-data";
 export default {
   data() {
     var checkExample = (rule, value, callback) => {
@@ -398,6 +396,7 @@ export default {
     return {
       tableData: [], // 直接获取的数据
       productData: [], // 处理后展示的数据
+      ruleData: [], // 规则数据
       currentRow: null, //
       isPagination: false,
       isLoading: null,
@@ -406,14 +405,14 @@ export default {
       dialogFormVisible3: false,
       editIndex: null,
       ruleForm: {
-        VIP: "",
+        vip: "",
         age: "",
         area: {},
         job: "",
-        money:"",
+        money: "",
       },
       form: {},
-      options: [{ label: "不限", value: "不限" }, ...provinceAndCityData],
+      options: [{ label: "不限", value: "不限" }, ...regionData],
 
       // 设置输入检测
       rules: {
@@ -485,34 +484,62 @@ export default {
   methods: {
     emptyRuleForm() {
       this.ruleForm = {
-        VIP: "",
+        vip: "",
         age: "",
         area: {},
         job: "",
-        money:'',
+        money: "",
       };
     },
     handleChange() {
-      let temp = "";
-      if (this.ruleForm.area) {
-        for (let i = 0; i < this.ruleForm.area.length; i++) {
-          if (this.ruleForm.area[i] == "不限") {
-            temp += "不限";
-            break;
-          } else {
-            temp +=
-              CodeToText[this.ruleForm.area[i]];
-          }
-        }
-      }
-      this.ruleForm.area=temp;
+      // if (this.ruleForm.area) {
+      //   if (this.ruleForm.area[0] == "不限") {
+      //     this.ruleForm.area = "不限";
+      //   }
+      //   this.ruleForm.area=this.ruleForm.area[this.ruleForm.area.length-1]
+      // }
+      this.ruleForm.area=JSON.stringify(this.ruleForm.area)
     },
     ruleEdit(index) {
-      this.dialogFormVisible3 = true;
       this.editIndex = index;
-      this.form = {
-        ...this.productData[index],
-      };
+      this.axios({
+        method: "get",
+        url: "admin/item/rule/select",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+          itemId: this.tableData[this.editIndex].id,
+        },
+      })
+        .then((response) => {
+          if (response.data.data == null) {
+            this.emptyRuleForm();
+            this.dialogFormVisible3 = true;
+            return;
+          }
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+          } else {
+            this.ruleForm = response.data.data;
+            this.ruleForm.money = response.data.data.money / 10000;
+            if (this.ruleForm.vip == 0) {
+              this.ruleForm.vip = "大众会员";
+            } else if (this.ruleForm.vip == 1) {
+              this.ruleForm.vip = "黄金会员";
+            } else if (this.ruleForm.vip == 2) {
+              this.ruleForm.vip = "白金会员";
+            } else {
+              this.ruleForm.vip = "钻石会员";
+            }
+            // this.ruleForm.area=[this.ruleForm.area.splice(0,),this.rul[eForm.area[],this.ruleForm.area],
+            console.log(this.ruleForm.area);
+            // this.ruleForm.area = TextToCode[this.ruleForm.area];
+            this.ruleForm.area = this.ruleForm.age = 0;
+            this.dialogFormVisible3 = true;
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
     },
     cancelRuleInfo() {
       this.dialogFormVisible3 = false;
@@ -521,20 +548,24 @@ export default {
     confirmRuleInfo() {
       console.log(this.ruleForm);
       this.axios({
-        method:'get',
-        url: '/admin/item/rule',
+        method: "get",
+        url: "/admin/item/rule/config",
         params: {
-          itemId:this.tableData[this.editIndex].id,
-          itemName:this.tableData[this.editIndex].name,
+          token: window.sessionStorage.getItem("token"),
+          itemId: this.tableData[this.editIndex].id,
+          itemName: this.tableData[this.editIndex].name,
           ...this.ruleForm,
-          age:0
-        }
-      }).then((response) => {
+          money: this.ruleForm.money * 10000,
+          age: 0,
+        },
+      })
+        .then((response) => {
           if (response.data.status != 0) {
             this.MessageBox.alert(response.data.data.message);
           } else {
+            this.MessageBox.alert("配置成功！");
             console.log(1);
-            this.emptyRuleForm()
+            this.emptyRuleForm();
           }
         })
         .catch((err) => {
@@ -784,6 +815,13 @@ export default {
 
         return false;
       });
+    /* this.axios({
+      method:'post',
+      url: requestUrl,
+      data: {
+        id:requestUrl
+      }
+    }) */
   },
   filters: {},
 };

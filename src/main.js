@@ -81,9 +81,9 @@ Vue.prototype.MessageBox = MessageBox
 Vue.prototype.axios = axios;
 // axios.defaults.withCredentials = true
 // axios基本设置
-axios.defaults.baseURL = 'http://47.113.180.139:8080'
+// axios.defaults.baseURL = 'http://47.113.180.139:8080'
 // 代理服务器 请求本地
-// axios.defaults.baseURL = 'http://47.113.224.43:90/'
+axios.defaults.baseURL = 'http://127.0.0.1:8080/'
 new Vue({
   router,
   store,

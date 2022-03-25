@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import UserManagement from '../components/UserManagement.vue'
+import UserLoanManagement from '../components/UserLoanManagement.vue'
+import UserStoreManagement from '../components/UserStoreManagement.vue'
 import ProductStoreManagement from '../components/ProductStoreManagement.vue'
 import ProductLoanManagement from '../components/ProductLoanManagement.vue'
 import AdminLogin from '../views/AdminLogin.vue'
@@ -25,9 +26,14 @@ const routes = [
     redirect: '/management/product/store',
     children: [
       {
-        path: 'user',
-        name: 'User',
-        component: UserManagement
+        path: 'user/store',
+        name: 'UserStore',
+        component: UserStoreManagement
+      },
+      {
+        path: 'user/loan',
+        name: 'UserLoan',
+        component: UserLoanManagement
       },
       {
 

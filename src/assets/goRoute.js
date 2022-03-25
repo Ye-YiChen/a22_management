@@ -12,7 +12,7 @@ const minin = {
         },
         goUser() {
             this.$router.push({
-                name: 'User'
+                name: 'UserStore'
             })
         },
         goStore() {

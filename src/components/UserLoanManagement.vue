@@ -1,9 +1,14 @@
 <template>
   <el-main>
     <el-collapse v-model="activeNames" @change="handleChange">
-      <el-collapse-item title="一致性 Consistency" name="1">
+      <el-collapse-item
+        v-for="(data, index) in localUserData"
+        :title="data.id + data.name + '  '"
+        :key="index"
+        name="1"
+      >
         <el-table
-          :data="showUserData"
+          :data="localUserData"
           v-if="!isEmpty"
           :stripe="true"
           @current-change="handleCurrentChange"
@@ -55,9 +60,28 @@
             </template>
           </el-table-column>
 
-          <el-table-column prop="name" label="用户名称" width="">
+          <el-table-column prop="userId" label="用户账号" width="">
           </el-table-column>
-          <el-table-column prop="phone" label="用户账号" width="">
+          <el-table-column prop="userName" label="用户名称" width="">
+          </el-table-column>
+          <el-table-column
+            prop="tag"
+            label="标签"
+            width="100"
+            :filters="[
+              { text: '有资格', value: '有资格' },
+              { text: '无资格', value: '无资格' },
+            ]"
+            :filter-method="filterTag"
+            filter-placement="bottom-end"
+          >
+            <template slot-scope="scope">
+              <el-tag
+                :type="scope.row.tag === '无资格' ? 'primary' : 'success'"
+                disable-transitions
+                >{{ scope.row.tag }}</el-tag
+              >
+            </template>
           </el-table-column>
           <el-table-column align="right">
             <template slot="header">
@@ -91,29 +115,6 @@
           </el-table-column> -->
         </el-table>
       </el-collapse-item>
-      <el-collapse-item title="反馈 Feedback" name="2">
-        <div>
-          控制反馈：通过界面样式和交互动效让用户可以清晰的感知自己的操作；
-        </div>
-        <div>页面反馈：操作后，通过页面元素的变化清晰地展现当前状态。</div>
-      </el-collapse-item>
-      <el-collapse-item title="效率 Efficiency" name="3">
-        <div>简化流程：设计简洁直观的操作流程；</div>
-        <div>
-          清晰明确：语言表达清晰且表意明确，让用户快速理解进而作出决策；
-        </div>
-        <div>
-          帮助用户识别：界面简单直白，让用户快速识别而非回忆，减少用户记忆负担。
-        </div>
-      </el-collapse-item>
-      <el-collapse-item title="可控 Controllability" name="4">
-        <div>
-          用户决策：根据场景可给予用户操作建议或安全提示，但不能代替用户进行决策；
-        </div>
-        <div>
-          结果可控：用户可以自由的进行操作，包括撤销、回退和终止当前操作等。
-        </div>
-      </el-collapse-item>
     </el-collapse>
 
     <el-pagination
@@ -135,8 +136,24 @@ export default {
       searchTimer: null,
       activeNames: [],
       localUserData: [],
-      showUserData: [{ phone: "nihao", name: "hello" }],
+      showUserData: [],
     };
+  },
+  mounted() {
+    this.axios({
+      method: "get",
+      url: "/admin/item/loan",
+      params: {
+        token: window.sessionStorage.getItem("token"),
+      },
+    }).then((response) => {
+      console.log(response);
+      if (response.data.status != 0) {
+        this.MessageBox.alert(response.data.data.message);
+      } else {
+        this.localUserData = response.data.data;
+      }
+    });
   },
   computed: {
     isEmpty() {
@@ -147,10 +164,16 @@ export default {
     },
   },
   methods: {
-    handleChange(val) {
-      console.log(val);
+    filterTag(value, row) {
+      return row.tag === value;
+    },
+    handleChange() {
+      // 展开 最外层数据 this.activeNames 时触发
+      console.log(1);
     },
     handleCurrentChange(val) {
+      // 点击 某条具体数据时触发
+      console.log(2);
       this.currentRow = val;
     },
   },
@@ -170,11 +193,35 @@ export default {
         }
       }, 300);
     },
+    activeNames: {
+      deep: true,
+      handler(newValue, oldValue) {
+        let index=newValue[newValue.length-1]-1
+        if (newValue.length > oldValue.length) {
+          // 在这里请求具体数据 flag 0 cg  1 sb
+          this.axios({
+            method: "post",
+            url: "/admin/item/user",
+            params: {
+              token: window.sessionStorage.getItem("token"),
+              // itemId:23
+              itemId: this.localUserData[index].id,
+            },
+          }).then(response=>{
+            console.log(response);
+          });
+        }
+      },
+    },
   },
 };
 </script>
 
 <style scoped>
+.el-collapse-item__header {
+  font-size: 20px;
+  font-weight: 700;
+}
 .user-search {
   -webkit-appearance: none;
   background-color: #fff;
@@ -192,8 +239,7 @@ export default {
   padding: 0 15px;
   transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
-.user-search:focus{
-  border: 1px solid rgb(179,192,209);
-
+.user-search:focus {
+  border: 1px solid rgb(179, 192, 209);
 }
 </style>

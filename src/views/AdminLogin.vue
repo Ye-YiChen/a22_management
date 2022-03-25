@@ -81,6 +81,7 @@ export default {
             this.dialogMessage = response.data.data.message;
           } else {
             window.sessionStorage.setItem('token',response.data.data)
+            this.$store.state.adminName=response.data.data.name
             this.goManagement();
           }
         })
