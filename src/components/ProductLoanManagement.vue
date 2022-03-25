@@ -78,14 +78,15 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="state" label="规则配置">
+      <el-table-column prop="state" sortable label="规则配置">
         <template slot-scope="scope">
           <el-button
             size="small"
             type="primary"
             round
             plain
-            @click="ruleEdit(scope.$index, scope.row)"
+            :disabled="scope.row.state == '即将开始' ? false : true"
+            @click="ruleEdit(scope.$index, scope.row, scope.row.state)"
             >配置规则</el-button
           >
         </template>
@@ -407,7 +408,7 @@ export default {
       ruleForm: {
         vip: "",
         age: "",
-        area: {},
+        area: [],
         job: "",
         money: "",
       },
@@ -482,25 +483,34 @@ export default {
     },
   },
   methods: {
+    areaCodeChange(code) {
+      code = Number(code);
+      let res = [];
+      res.push(String(Math.trunc(code / 10000) + "0000"));
+      res.push(String(Math.trunc(code / 100) + "00"));
+      res.push(String(code));
+      return res;
+    },
     emptyRuleForm() {
       this.ruleForm = {
         vip: "",
         age: "",
-        area: {},
+        area: [],
         job: "",
         money: "",
       };
     },
     handleChange() {
-      // if (this.ruleForm.area) {
-      //   if (this.ruleForm.area[0] == "不限") {
-      //     this.ruleForm.area = "不限";
-      //   }
-      //   this.ruleForm.area=this.ruleForm.area[this.ruleForm.area.length-1]
-      // }
-      this.ruleForm.area=JSON.stringify(this.ruleForm.area)
+      if (this.ruleForm.area) {
+        if (this.ruleForm.area[0] == "不限") {
+          this.ruleForm.area = "不限";
+        } else
+          this.ruleForm.area =
+            this.ruleForm.area[this.ruleForm.area.length - 1];
+      }
     },
     ruleEdit(index) {
+      // 数据回显
       this.editIndex = index;
       this.axios({
         method: "get",
@@ -530,10 +540,8 @@ export default {
             } else {
               this.ruleForm.vip = "钻石会员";
             }
-            // this.ruleForm.area=[this.ruleForm.area.splice(0,),this.rul[eForm.area[],this.ruleForm.area],
-            console.log(this.ruleForm.area);
-            // this.ruleForm.area = TextToCode[this.ruleForm.area];
-            this.ruleForm.area = this.ruleForm.age = 0;
+
+            this.ruleForm.area = this.areaCodeChange(this.ruleForm.area);
             this.dialogFormVisible3 = true;
           }
         })
@@ -546,7 +554,9 @@ export default {
       this.emptyRuleForm();
     },
     confirmRuleInfo() {
-      console.log(this.ruleForm);
+      if (typeof this.ruleForm.area != "string") {
+        this.ruleForm.area = this.ruleForm.area[this.ruleForm.area.length - 1];
+      }
       this.axios({
         method: "get",
         url: "/admin/item/rule/config",

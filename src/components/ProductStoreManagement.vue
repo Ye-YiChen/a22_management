@@ -66,9 +66,9 @@
           <span> {{ scope.row.num }}% </span>
         </template>
       </el-table-column>
-      <el-table-column sortable  label="秒杀开始时间">
-      <template slot-scope="scope">
-          <span> {{ dateFormat(scope.row.startTime )}} </span>
+      <el-table-column sortable label="秒杀开始时间">
+        <template slot-scope="scope">
+          <span> {{ dateFormat(scope.row.startTime) }} </span>
         </template>
       </el-table-column>
       <el-table-column sortable prop="state" label="产品状态">
@@ -78,24 +78,42 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column fixed="right" label="操作" width="150">
+      <el-table-column sortable  prop="state" label="规则配置">
         <template slot-scope="scope">
-          <el-button size="mini" @click="handleEdit(scope.$index, scope.row)"
-            >编辑</el-button
-          >
           <el-button
-            size="mini"
-            type="danger"
-            @click="handleDelete(scope.$index, scope.row)"
-            >删除</el-button
+            size="small"
+            type="primary"
+            round
+            plain
+            :disabled="(scope.row.state == '即将开始' ? false : true)"
+            @click="ruleEdit(scope.$index, scope.row)"
+            >配置规则</el-button
           >
         </template>
       </el-table-column>
+      <el-table-column fixed="right" label="操作" width="150">
+        <template slot-scope="scope">
+          <el-button
+            size="medium"
+            circle
+            type="info"
+            @click="handleEdit(scope.$index, scope.row)"
+            icon="el-icon-edit"
+          ></el-button>
+          <el-button
+            size="medium"
+            type="danger"
+            @click="handleDelete(scope.$index, scope.row)"
+            circle
+            icon="el-icon-delete"
+          ></el-button>
+        </template>
+      </el-table-column>
     </el-table>
-    <el-dialog title="产品编辑" :visible.sync="dialogFormVisible1">
+    <el-dialog title="产品编辑" :visible.sync="dialogFormVisible1" width="50%">
       <el-form
         :model="form"
-        label-width="100px"
+        label-width="150px"
         label-position="left"
         :rules="rules"
       >
@@ -191,7 +209,7 @@
         <el-button type="primary" @click="confirmEditInfo()">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="新增产品" :visible.sync="dialogFormVisible2">
+    <el-dialog title="产品新增" :visible.sync="dialogFormVisible2">
       <el-form
         :model="form"
         label-width="150px"
@@ -272,6 +290,69 @@
         <el-button type="primary" @click="confirmAddInfo()">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="规则配置" :visible.sync="dialogFormVisible3">
+      <el-form
+        :model="ruleForm"
+        label-width="150px"
+        label-position="left"
+        :rules="rules"
+      >
+        <!-- 这里是一个 年龄选择器 可能后来话需要 -->
+        <!-- <el-form-item label="年龄（岁）" prop="age">
+          <el-select v-model="ruleForm.age" placeholder="请选择" size="small">
+            <el-option label="全部" value="全部"> </el-option>
+            <el-option label="18-28" value="smaller"></el-option>
+            <el-option label="29-40" value="bigger"> </el-option>
+            <el-option label="41-65" value="bigger"> </el-option>
+            <el-option label="65以上" value="bigger"> </el-option>
+          </el-select>
+        </el-form-item> -->
+
+        <el-form-item label="地区" prop="area">
+          <el-cascader
+            size="small"
+            :options="options"
+            v-model="ruleForm.area"
+            @change="handleChange"
+            multiple
+          >
+          </el-cascader>
+        </el-form-item>
+        <el-form-item label="现有资产（万元）" prop="money">
+          <span style="margin-right: 10px">不低于 </span>
+
+          <el-input-number
+            :min="0"
+            :precision="2"
+            :step="0.01"
+            v-model="ruleForm.money"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="VIP" prop="vip">
+          <span style="margin-right: 10px">不低于 </span>
+          <el-select v-model="ruleForm.vip" placeholder="请选择" size="small">
+            <el-option label="大众会员" value="0"> </el-option>
+            <el-option label="黄金会员" value="1"></el-option>
+            <el-option label="白金会员" value="2"> </el-option>
+            <el-option label="钻石会员" value="3"> </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="职业" prop="job">
+          <el-select v-model="ruleForm.job" placeholder="请选择" size="small">
+            <el-option label="不限" value="不限"> </el-option>
+            <el-option label="无业" value="无业"> </el-option>
+            <el-option label="学生" value="学生"></el-option>
+            <el-option label="老师" value="老师"> </el-option>
+            <el-option label="农民" value="农民"> </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelRuleInfo()">取 消</el-button>
+        <el-button type="primary" @click="confirmRuleInfo()">确 定</el-button>
+      </div>
+    </el-dialog>
 
     <!-- 分页器 -->
     <el-pagination
@@ -286,6 +367,12 @@
 
 <script>
 // import { MessageBox } from "element-ui";
+// Vue.use(Cascader)
+import {
+  regionData,
+  // CodeToText,
+  // TextToCode,
+} from "element-china-area-data";
 export default {
   data() {
     var checkExample = (rule, value, callback) => {
@@ -308,15 +395,26 @@ export default {
       }
     };
     return {
-      tableData: [],
-      productData: [],
-      currentRow: null,
+      tableData: [], // 直接获取的数据
+      productData: [], // 处理后展示的数据
+      ruleData: [], // 规则数据
+      currentRow: null, //
       isPagination: false,
       isLoading: null,
       dialogFormVisible1: false,
       dialogFormVisible2: false,
-      form: {},
+      dialogFormVisible3: false,
       editIndex: null,
+      ruleForm: {
+        vip: "",
+        age: "",
+        area: [],
+        job: "",
+        money: "",
+      },
+      form: {},
+      options: [{ label: "不限", value: "不限" }, ...regionData],
+
       // 设置输入检测
       rules: {
         name: [{ validator: checkExample, required: true, trigger: "blur" }],
@@ -385,9 +483,108 @@ export default {
     },
   },
   methods: {
+    areaCodeChange(code) {
+      code = Number(code);
+      let res = [];
+      res.push(String(Math.trunc(code / 10000) + "0000"));
+      res.push(String(Math.trunc(code / 100) + "00"));
+      res.push(String(code));
+      return res;
+    },
+    emptyRuleForm() {
+      this.ruleForm = {
+        vip: "",
+        age: "",
+        area: [],
+        job: "",
+        money: "",
+      };
+    },
+    handleChange() {
+      if (this.ruleForm.area) {
+        if (this.ruleForm.area[0] == "不限") {
+          this.ruleForm.area = "不限";
+        } else
+          this.ruleForm.area =
+            this.ruleForm.area[this.ruleForm.area.length - 1];
+      }
+    },
+    ruleEdit(index) {
+      // 数据回显
+      this.editIndex = index;
+      this.axios({
+        method: "get",
+        url: "admin/item/rule/select",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+          itemId: this.tableData[this.editIndex].id,
+        },
+      })
+        .then((response) => {
+          if (response.data.data == null) {
+            this.emptyRuleForm();
+            this.dialogFormVisible3 = true;
+            return;
+          }
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+          } else {
+            this.ruleForm = response.data.data;
+            this.ruleForm.money = response.data.data.money / 10000;
+            if (this.ruleForm.vip == 0) {
+              this.ruleForm.vip = "大众会员";
+            } else if (this.ruleForm.vip == 1) {
+              this.ruleForm.vip = "黄金会员";
+            } else if (this.ruleForm.vip == 2) {
+              this.ruleForm.vip = "白金会员";
+            } else {
+              this.ruleForm.vip = "钻石会员";
+            }
+
+            this.ruleForm.area = this.areaCodeChange(this.ruleForm.area);
+            this.dialogFormVisible3 = true;
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
+    },
+    cancelRuleInfo() {
+      this.dialogFormVisible3 = false;
+      this.emptyRuleForm();
+    },
+    confirmRuleInfo() {
+      if (typeof this.ruleForm.area != "string") {
+        this.ruleForm.area = this.ruleForm.area[this.ruleForm.area.length - 1];
+      }
+      this.axios({
+        method: "get",
+        url: "/admin/item/rule/config",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+          itemId: this.tableData[this.editIndex].id,
+          itemName: this.tableData[this.editIndex].name,
+          ...this.ruleForm,
+          money: this.ruleForm.money * 10000,
+          age: 0,
+        },
+      })
+        .then((response) => {
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+          } else {
+            this.MessageBox.alert("配置成功！");
+            console.log(1);
+            this.emptyRuleForm();
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
+    },
     addProduct() {
       this.form = {
-        flag: 0,
+        flag: 1,
         state: "即将开始",
       };
       this.dialogFormVisible2 = true;
@@ -472,7 +669,9 @@ export default {
             // this.tableData.splice(this.editIndex, 1);
             // this.productData[this.editIndex] = this.form;
             this.$set(this.productData, this.editIndex, this.form);
-            this.productData[this.editIndex].startTime=this.dateFormat(this.form.startTime)
+            this.productData[this.editIndex].startTime = this.dateFormat(
+              this.form.startTime
+            );
             this.tableData[this.editIndex] = {
               ...this.form,
               state:
@@ -522,10 +721,12 @@ export default {
             } else {
               this.MessageBox.alert(response.data.data);
             }
+
             return false;
           } else {
             this.MessageBox.alert("添加成功！");
             this.dialogFormVisible2 = false;
+            console.log(this.form);
             this.productData.unshift(this.form);
             this.tableData.unshift(this.form);
             this.tableData[0] = {
@@ -536,7 +737,6 @@ export default {
                   ? 1
                   : 2,
             };
-            console.log(1);
           }
         })
         .catch((err) => {
@@ -585,6 +785,7 @@ export default {
     },
   },
   mounted() {
+    document.getElementsByTagName("html")[0].style.overflowY = "auto";
     this.isLoading = true;
     this.axios({
       method: "get",
@@ -624,12 +825,29 @@ export default {
 
         return false;
       });
+    /* this.axios({
+      method:'post',
+      url: requestUrl,
+      data: {
+        id:requestUrl
+      }
+    }) */
   },
   filters: {},
 };
 </script>
 
-<style scoped>
+<style >
+.el-select {
+  width: 120px;
+  margin-right: 10px;
+}
+.el-checkbox-button {
+  padding: 0;
+}
+.el-cascader-menu {
+  height: 300px;
+}
 .right {
   float: right;
 }
@@ -643,11 +861,14 @@ export default {
 .el-form-item__label {
   width: 200px;
 }
+.el-form-item__content {
+  margin: 0;
+}
 .demo-table-expand {
   font-size: 0;
 }
 .demo-table-expand label {
-  width: 90px;
+  width: 120px;
   color: #99a9bf;
 }
 .demo-table-expand .el-form-item {

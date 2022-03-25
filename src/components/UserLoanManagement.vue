@@ -1,12 +1,18 @@
 <template>
   <el-main>
-    <el-collapse v-model="activeNames" @change="handleChange">
+    <el-collapse accordion v-model="activeNames" @change="handleChange">
       <el-collapse-item
-        v-for="(data, index) in localUserData"
-        :title="data.id + data.name + '  '"
+        v-for="(data, index) in localProductData"
         :key="index"
-        name="1"
+        :name="index + 1"
       >
+        <template slot="title">
+          <ul class="table-title">
+            <li><span>产品编号：</span>{{ data.id }}</li>
+            <li><span>产品名称：</span>{{ data.name }}</li>
+            <li><span>产品状态：</span>{{ data.state }}</li>
+          </ul>
+        </template>
         <el-table
           :data="localUserData"
           v-if="!isEmpty"
@@ -65,21 +71,21 @@
           <el-table-column prop="userName" label="用户名称" width="">
           </el-table-column>
           <el-table-column
-            prop="tag"
+            prop="flag"
             label="标签"
             width="100"
             :filters="[
               { text: '有资格', value: '有资格' },
               { text: '无资格', value: '无资格' },
             ]"
-            :filter-method="filterTag"
+            :filter-method="filterflag"
             filter-placement="bottom-end"
           >
             <template slot-scope="scope">
               <el-tag
-                :type="scope.row.tag === '无资格' ? 'primary' : 'success'"
+                :type="scope.row.flag == '' ? 'primary' : 'success'"
                 disable-transitions
-                >{{ scope.row.tag }}</el-tag
+                >{{ scope.row.flag }}</el-tag
               >
             </template>
           </el-table-column>
@@ -136,7 +142,7 @@ export default {
       searchTimer: null,
       activeNames: [],
       localUserData: [],
-      showUserData: [],
+      localProductData: [],
     };
   },
   mounted() {
@@ -147,11 +153,11 @@ export default {
         token: window.sessionStorage.getItem("token"),
       },
     }).then((response) => {
-      console.log(response);
+      console.log(response.data.data);
       if (response.data.status != 0) {
         this.MessageBox.alert(response.data.data.message);
       } else {
-        this.localUserData = response.data.data;
+        this.localProductData = response.data.data;
       }
     });
   },
@@ -164,12 +170,12 @@ export default {
     },
   },
   methods: {
-    filterTag(value, row) {
-      return row.tag === value;
+    filterflag(value, row) {
+      return row.flag === value;
     },
-    handleChange() {
+    handleChange(val) {
       // 展开 最外层数据 this.activeNames 时触发
-      console.log(1);
+      console.log(val);
     },
     handleCurrentChange(val) {
       // 点击 某条具体数据时触发
@@ -179,8 +185,6 @@ export default {
   },
   watch: {
     searchText(oldValue, newValue) {
-      console.log(1);
-      console.log(newValue);
       clearInterval(this.searchTimer);
       this.searchTimer = setInterval(() => {
         // 进行一次筛选
@@ -195,22 +199,32 @@ export default {
     },
     activeNames: {
       deep: true,
-      handler(newValue, oldValue) {
-        let index=newValue[newValue.length-1]-1
-        if (newValue.length > oldValue.length) {
-          // 在这里请求具体数据 flag 0 cg  1 sb
-          this.axios({
-            method: "post",
-            url: "/admin/item/user",
-            params: {
-              token: window.sessionStorage.getItem("token"),
-              // itemId:23
-              itemId: this.localUserData[index].id,
-            },
-          }).then(response=>{
-            console.log(response);
-          });
+      handler(newValue) {
+        if (newValue == 0) {
+          return;
         }
+        let index = newValue - 1;
+        // 在这里请求具体数据 flag 0 cg  1 sb
+        this.axios({
+          method: "post",
+          url: "/admin/item/user",
+          params: {
+            token: window.sessionStorage.getItem("token"),
+            // itemId:23
+            itemId: this.localProductData[index].id,
+          },
+        }).then((response) => {
+          setTimeout(() => {
+            this.localUserData = response.data.data;
+            for (let i of this.localUserData) {
+              if (i.flag == "0") {
+                i.flag = "有资格";
+              } else {
+                i.flag = "无资格";
+              }
+            }
+          },200);
+        });
       },
     },
   },
@@ -218,6 +232,28 @@ export default {
 </script>
 
 <style scoped>
+ul {
+  width: 100%;
+  text-decoration: none;
+  list-style: none;
+  padding: 0;
+  font-weight: 700;
+  font-size: 18px;
+  color:#909399;
+}
+li {
+  flex: 1;
+  text-align: left;
+  padding-left: 60px;
+}
+li > span {
+  font-weight: 400;
+  font-size: 15px;
+}
+.table-title {
+  display: flex;
+  justify-content: space-around;
+}
 .el-collapse-item__header {
   font-size: 20px;
   font-weight: 700;
