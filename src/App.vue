@@ -9,7 +9,19 @@ export default {
   components: {},
 };
 </script>
-<style lang="less" scoped>
+<style lang="less">
+.success {
+  color: #5cb87a;
+}
+.primary {
+  color: #409eff;
+}
+.danger {
+  color: #f56c6c;
+}
+.warning {
+  color: #e6a23c;
+}
 html {
   min-height: 100%;
 }

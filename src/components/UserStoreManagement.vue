@@ -3,58 +3,50 @@
     <el-collapse accordion v-model="activeNames" @change="handleChange">
       <el-collapse-item
         v-for="(data, index) in localProductData"
-        :title="data.id + data.name + '  '"
         :key="index"
         :name="index + 1"
       >
+        <template slot="title">
+          <ul class="table-title">
+            <li><span>产品编号：</span>{{ data.id }}</li>
+            <li><span>产品名称：</span>{{ data.name }}</li>
+            <li :class="stateFormate(data.state, 0)">
+              <span>产品状态：</span>{{ stateFormate(data.state, 1) }}
+            </li>
+          </ul>
+        </template>
         <el-table
           :data="localUserData"
           v-if="!isEmpty"
           :stripe="true"
           @current-change="handleCurrentChange"
+          @expand-change="handleExpandChange"
           max-height="650"
         >
           <el-table-column type="expand">
-            <template slot-scope="props">
+            <template :slot-scope="detailUserData">
               <el-form label-position="left" inline class="demo-table-expand">
                 <!-- <el-form-item label="产品编号">
               <span>{{ props.row.name }}</span>
             </el-form-item> -->
                 <el-form-item label="用户账号">
-                  <span>{{ props.row.phone }}</span>
+                  <span>{{ detailUserData.id }}</span>
                 </el-form-item>
                 <el-form-item label="用户名称">
-                  <span>{{ props.row.name }}</span>
+                  <span>{{ detailUserData.name }}</span>
                 </el-form-item>
-                <el-form-item label="限购数量">
-                  <span>{{}}</span>
+                <el-form-item label="用户性别">
+                  <span>{{ detailUserData ? "男" : "女" }}</span>
                 </el-form-item>
-                <el-form-item label="产品单价">
-                  <span>{{}}</span>
+                <el-form-item label="用户年龄">
+                  <span>{{ detailUserData.age }}</span>
                 </el-form-item>
-                <el-form-item label="年化利率">
-                  <span>{{}}</span>
+                <el-form-item label="用户等级">
+                  <span>{{ detailUserData.vip }}</span>
                 </el-form-item>
-                <el-form-item label="产品期限">
-                  <span>{{}}</span>
-                </el-form-item>
-                <el-form-item label="秒杀开始时间">
-                  <span>{{}}</span>
-                </el-form-item>
-                <el-form-item label="秒杀结束时间">
-                  <span>{{}}</span>
-                </el-form-item>
-                <el-form-item label="起息日时间">
-                  <span>{{}}</span>
-                </el-form-item>
-                <el-form-item label="到期日时间">
-                  <span>{{}}</span>
-                </el-form-item>
-                <el-form-item label="风险等级">
-                  <span>{{}}</span>
-                </el-form-item>
-                <el-form-item label="管理员">
-                  <span>{{}}</span>
+
+                <el-form-item label="用户身份证">
+                  <span>{{ detailUserData.idNum }}</span>
                 </el-form-item>
               </el-form>
             </template>
@@ -66,18 +58,19 @@
           </el-table-column>
           <el-table-column
             prop="flag"
-            label="标签"
+            label="筛选"
             width="100"
             :filters="[
               { text: '有资格', value: '有资格' },
               { text: '无资格', value: '无资格' },
+              { text: '成功购买', value: '成功购买' },
             ]"
             :filter-method="filterflag"
             filter-placement="bottom-end"
           >
             <template slot-scope="scope">
               <el-tag
-                :type="scope.row.flag == '' ? 'primary' : 'success'"
+                :type="scope.row.flag == '无资格' ? 'danger' : 'success'"
                 disable-transitions
                 >{{ scope.row.flag }}</el-tag
               >
@@ -124,6 +117,15 @@
       :total="1"
     >
     </el-pagination>
+    <el-drawer
+      title="我是标题"
+      :visible.sync="drawer"
+      :direction="btt"
+      :before-close="handleClose"
+      modal:false
+    >
+      <span>我来啦!</span>
+    </el-drawer>
     <el-empty v-if="isEmpty" description="这里一条数据都没有呢"></el-empty>
   </el-main>
 </template>
@@ -136,6 +138,7 @@ export default {
       searchTimer: null,
       activeNames: [],
       localUserData: [],
+      detailUserData: [],
       localProductData: [],
     };
   },
@@ -147,6 +150,7 @@ export default {
         token: window.sessionStorage.getItem("token"),
       },
     }).then((response) => {
+      console.log(response);
       if (response.data.status != 0) {
         this.MessageBox.alert(response.data.data.message);
       } else {
@@ -163,12 +167,68 @@ export default {
     },
   },
   methods: {
+    moreInfo() {
+      this.drawer = true;
+    },
+    stateFormate(val, state) {
+      // val 0 未开始 1 正在进行 2 时间截止 3商品售罄
+      // state 0 查询 类名 ；1 查询 字符显示
+      if (state == 0) {
+        if (val == 0) {
+          return "warning";
+        } else if (val == 1) {
+          return "success";
+        } else {
+          return "danger";
+        }
+      } else {
+        if (val == 0) {
+          return "尚未开始";
+        } else if (val == 1) {
+          return "正在进行";
+        } else {
+          return "已经结束";
+        }
+      }
+    },
+    handleExpandChange(data) {
+      this.detailUserData = {};
+      this.axios({
+        method: "post",
+        url: "/admin/user/info",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+          userId: data.userId,
+        },
+      })
+        .then((response) => {
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+            return;
+          }
+          console.log(response);
+          this.detailUserData = response.data.data;
+          if (this.detailUserData.vip == 0) {
+            this.detailUserData.vip = "大众会员";
+          } else if (this.detailUserData.vip == 1) {
+            this.detailUserData.vip = "黄金会员";
+          } else if (this.detailUserData.vip == 2) {
+            this.detailUserData.vip = "白金会员";
+          } else {
+            this.detailUserData.vip = "钻石会员";
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
+    },
     filterflag(value, row) {
       return row.flag === value;
     },
     handleChange(val) {
       // 展开 最外层数据 this.activeNames 时触发
       console.log(val);
+      this.localUserData = [];
     },
     handleCurrentChange(val) {
       // 点击 某条具体数据时触发
@@ -199,28 +259,63 @@ export default {
           return;
         }
         let index = newValue - 1;
-
-        // 在这里请求具体数据 flag 0 cg  1 sb
-        this.axios({
-          method: "post",
-          url: "/admin/item/user",
-          params: {
-            token: window.sessionStorage.getItem("token"),
-            // itemId:23
-            itemId: this.localProductData[index].id,
-          },
-        }).then((response) => {
-          setTimeout(() => {
-            this.localUserData = response.data.data;
-            for (let i of this.localUserData) {
-              if (i.flag == "0") {
-                i.flag = "有资格";
-              } else {
-                i.flag = "无资格";
+        // 0 未开始 1 正在进行 2 时间截止 3商品售罄
+        // 如果商品未结束 显示 资格 请求路径
+        if (
+          this.localProductData[index].state == 0 ||
+          this.localProductData[index].state == 1
+        ) {
+          // 在这里请求具体数据 flag 0 cg  1 sb
+          this.axios({
+            method: "post",
+            url: "/admin/item/user",
+            params: {
+              token: window.sessionStorage.getItem("token"),
+              // itemId:23
+              itemId: this.localProductData[index].id,
+            },
+          }).then((response) => {
+            console.log(response);
+            setTimeout(() => {
+              this.localUserData = response.data.data;
+              for (let i of this.localUserData) {
+                if (i.flag == "0") {
+                  i.flag = "有资格";
+                } else {
+                  i.flag = "无资格";
+                }
               }
+            }, 200);
+          });
+        }
+        // 否则显示 是否购买请求路径
+        else {
+          this.axios({
+            method: "post",
+            url: "/admin/item/user/success",
+            params: {
+              token: window.sessionStorage.getItem("token"),
+              // itemId:23
+              itemId: this.localProductData[index].id,
+            },
+          }).then((response) => {
+            if (response.data.status != 0) {
+              this.MessageBox.alert(response.data.data.message);
+              return;
             }
-          }, 200);
-        });
+            console.log(response);
+            setTimeout(() => {
+              this.localUserData = response.data.data;
+              // userName
+              for (let i of this.localUserData) {
+                i.userName = i.name;
+              }
+              for (let i of this.localUserData) {
+                i.flag = "成功购买";
+              }
+            }, 200);
+          });
+        }
       },
     },
   },
@@ -228,6 +323,37 @@ export default {
 </script>
 
 <style scoped>
+ul {
+  width: 100%;
+  text-decoration: none;
+  list-style: none;
+  padding: 0;
+  font-weight: 700;
+  font-size: 15px;
+  color: #909399;
+}
+li {
+  flex: 1;
+  text-align: left;
+  padding-left: 60px;
+
+  /* 1. 先强制一行内显示文本 */
+  white-space: nowrap;
+  /*(默认normal自动换行)*/
+  /* 2. 超出部分隐藏 */
+  overflow: hidden;
+  /* 3.文字用省略号替代超出部分 */
+  text-overflow: ellipsis;
+}
+.table-title li > span {
+  font-weight: 400;
+  font-size: 15px;
+  color: #909399;
+}
+.table-title {
+  display: flex;
+  justify-content: space-around;
+}
 .el-collapse-item__header {
   font-size: 20px;
   font-weight: 700;

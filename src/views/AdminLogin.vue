@@ -43,6 +43,7 @@
         >
       </span>
     </el-dialog>
+    
   </div>
 </template>
 
@@ -75,13 +76,13 @@ export default {
         },
       })
         .then((response) => {
-          // console.log(response);
+          console.log(response);
           if (response.data.status != 0) {
             this.dialogVisible = true;
             this.dialogMessage = response.data.data.message;
           } else {
             window.sessionStorage.setItem('token',response.data.data)
-            this.$store.state.adminName=response.data.data.name
+            this.$store.state.adminName=response.data.data
             this.goManagement();
           }
         })

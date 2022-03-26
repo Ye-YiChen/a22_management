@@ -85,7 +85,7 @@
             type="primary"
             round
             plain
-            :disabled="(scope.row.state == '即将开始' ? false : true)"
+            :disabled="(scope.row.state == '已经结束' ? true : false)"
             @click="ruleEdit(scope.$index, scope.row)"
             >配置规则</el-button
           >

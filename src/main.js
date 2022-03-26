@@ -5,6 +5,7 @@ import router from './router'
 import store from './store'
 import axios from 'axios'
 import dayjs from 'dayjs'
+import echarts from 'echarts'
 import {
   Button,
   Container,
@@ -37,9 +38,10 @@ import {
   CheckboxButton,
   CheckboxGroup,
   CollapseItem,
-  Collapse
+  Collapse,
+  Drawer
 } from 'element-ui';
-import minin from './assets/goRoute'
+import minin from './goRoute'
 Vue.config.productionTip = false
 Vue.use(Button)
 Vue.use(Container)
@@ -72,11 +74,13 @@ Vue.use(CheckboxButton)
 Vue.use(CheckboxGroup)
 Vue.use(CollapseItem)
 Vue.use(Collapse)
+Vue.use(Drawer)
 
 
 Vue.mixin(minin)
 Vue.prototype.dayjs = dayjs
 
+Vue.prototype.$echarts = echarts
 Vue.prototype.MessageBox = MessageBox
 Vue.prototype.axios = axios;
 // axios.defaults.withCredentials = true
