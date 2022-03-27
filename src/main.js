@@ -5,7 +5,7 @@ import router from './router'
 import store from './store'
 import axios from 'axios'
 import dayjs from 'dayjs'
-import echarts from 'echarts'
+import * as echarts from 'echarts'
 import {
   Button,
   Container,
@@ -87,7 +87,7 @@ Vue.prototype.axios = axios;
 // axios基本设置
 axios.defaults.baseURL = 'http://47.113.180.139:8080'
 // 代理服务器 请求本地
-// axios.defaults.baseURL = 'http://127.0.0.1:8080/'
+// axios.defaults.baseURL = 'http://127.0.0.1:8080/'  
 new Vue({
   router,
   store,

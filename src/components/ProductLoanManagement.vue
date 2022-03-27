@@ -369,7 +369,7 @@
 // import { MessageBox } from "element-ui";
 // Vue.use(Cascader)
 import {
-  regionData,
+  regionDataPlus,
   // CodeToText,
   // TextToCode,
 } from "element-china-area-data";
@@ -405,6 +405,7 @@ export default {
       dialogFormVisible2: false,
       dialogFormVisible3: false,
       editIndex: null,
+      editInfo: null,
       ruleForm: {
         vip: "",
         age: "",
@@ -413,7 +414,7 @@ export default {
         money: "",
       },
       form: {},
-      options: [{ label: "不限", value: "不限" }, ...regionData],
+      options: [...regionDataPlus],
 
       // 设置输入检测
       rules: {
@@ -484,12 +485,18 @@ export default {
   },
   methods: {
     areaCodeChange(code) {
-      code = Number(code);
-      let res = [];
-      res.push(String(Math.trunc(code / 10000) + "0000"));
-      res.push(String(Math.trunc(code / 100) + "00"));
-      res.push(String(code));
-      return res;
+      code = String(code);
+      if (code == "") return [""];
+      let s1 = code.substr(0, 2),
+        s2 = code.substr(2, 2),
+        s3 = code.substr(3, 2);
+      if (s2 == "00") {
+        return [code, ""];
+      }
+      if (s3 == "00") {
+        return [s1 + "0000", s1 + s2 + "00", ""];
+      }
+      return [s1 + "0000", s1 + s2 + "00", s1 + s2 + s3];
     },
     emptyRuleForm() {
       this.ruleForm = {
@@ -501,23 +508,28 @@ export default {
       };
     },
     handleChange() {
+      console.log(this.ruleForm.area);
       if (this.ruleForm.area) {
-        if (this.ruleForm.area[0] == "不限") {
-          this.ruleForm.area = "不限";
-        } else
+        if (this.ruleForm.area[this.ruleForm.area.length - 1] != "")
           this.ruleForm.area =
             this.ruleForm.area[this.ruleForm.area.length - 1];
-      }
+        else if (this.ruleForm.area[this.ruleForm.area.length - 2] != "")
+          this.ruleForm.area =
+            this.ruleForm.area[this.ruleForm.area.length - 2];
+        else if (this.ruleForm.area[this.ruleForm.area.length - 3] != "")
+          this.ruleForm.area =
+            this.ruleForm.area[this.ruleForm.area.length - 3];
+      } else this.ruleForm.area = "";
     },
-    ruleEdit(index) {
+    ruleEdit(index, info) {
       // 数据回显
-      this.editIndex = index;
+      this.editInfo = info;
       this.axios({
         method: "get",
         url: "admin/item/rule/select",
         params: {
           token: window.sessionStorage.getItem("token"),
-          itemId: this.tableData[this.editIndex].id,
+          itemId: info.id,
         },
       })
         .then((response) => {
@@ -562,8 +574,8 @@ export default {
         url: "/admin/item/rule/config",
         params: {
           token: window.sessionStorage.getItem("token"),
-          itemId: this.tableData[this.editIndex].id,
-          itemName: this.tableData[this.editIndex].name,
+          itemId: this.editInfo.id,
+          itemName: this.editInfo.name,
           ...this.ruleForm,
           money: this.ruleForm.money * 10000,
           age: 0,
@@ -787,6 +799,7 @@ export default {
   mounted() {
     document.getElementsByTagName("html")[0].style.overflowY = "auto";
     this.isLoading = true;
+
     this.axios({
       method: "get",
       url: "/admin/item/loan",

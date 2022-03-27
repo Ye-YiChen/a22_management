@@ -78,14 +78,14 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column sortable  prop="state" label="规则配置">
+      <el-table-column sortable prop="state" label="规则配置">
         <template slot-scope="scope">
           <el-button
             size="small"
             type="primary"
             round
             plain
-            :disabled="(scope.row.state == '已经结束' ? true : false)"
+            :disabled="scope.row.state == '已经结束' ? true : false"
             @click="ruleEdit(scope.$index, scope.row)"
             >配置规则</el-button
           >
@@ -404,7 +404,8 @@ export default {
       dialogFormVisible1: false,
       dialogFormVisible2: false,
       dialogFormVisible3: false,
-      editIndex: null,
+      editInfo: null,
+      editIndex:null,
       ruleForm: {
         vip: "",
         age: "",
@@ -484,12 +485,18 @@ export default {
   },
   methods: {
     areaCodeChange(code) {
-      code = Number(code);
-      let res = [];
-      res.push(String(Math.trunc(code / 10000) + "0000"));
-      res.push(String(Math.trunc(code / 100) + "00"));
-      res.push(String(code));
-      return res;
+      code = String(code);
+      if (code == "") return [""];
+      let s1 = code.substr(0, 2),
+        s2 = code.substr(2, 2),
+        s3 = code.substr(3, 2);
+      if (s2 == "00") {
+        return [code, ""];
+      }
+      if (s3 == "00") {
+        return [s1 + "0000", s1 + s2 + "00", ""];
+      }
+      return [s1 + "0000", s1 + s2 + "00", s1 + s2 + s3];
     },
     emptyRuleForm() {
       this.ruleForm = {
@@ -509,15 +516,15 @@ export default {
             this.ruleForm.area[this.ruleForm.area.length - 1];
       }
     },
-    ruleEdit(index) {
+    ruleEdit(index, info) {
+      this.editInfo = info;
       // 数据回显
-      this.editIndex = index;
       this.axios({
         method: "get",
         url: "admin/item/rule/select",
         params: {
           token: window.sessionStorage.getItem("token"),
-          itemId: this.tableData[this.editIndex].id,
+          itemId: info.id,
         },
       })
         .then((response) => {
@@ -562,8 +569,8 @@ export default {
         url: "/admin/item/rule/config",
         params: {
           token: window.sessionStorage.getItem("token"),
-          itemId: this.tableData[this.editIndex].id,
-          itemName: this.tableData[this.editIndex].name,
+          itemId: this.editInfo.id,
+          itemName: this.editInfo.name,
           ...this.ruleForm,
           money: this.ruleForm.money * 10000,
           age: 0,
@@ -617,6 +624,7 @@ export default {
         });
     },
     handleEdit(index) {
+      // console.log(index,info);
       this.dialogFormVisible1 = true;
       this.editIndex = index;
       this.form = {

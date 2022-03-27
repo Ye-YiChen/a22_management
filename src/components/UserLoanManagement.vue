@@ -19,8 +19,8 @@
                 size="small"
                 type="primary"
                 round
-                @click.stop="moreInfo()"
-                >信息按钮</el-button
+                @click.stop="moreInfo(data)"
+                >数据监控</el-button
               >
             </li>
           </ul>
@@ -96,26 +96,6 @@
               />
             </template>
           </el-table-column>
-
-          <!-- <el-table-column prop="address" label="产品利率"> </el-table-column>
-          <el-table-column prop="address" label="秒杀开始时间">
-          </el-table-column>
-          <el-table-column prop="address" label="产品状态"> </el-table-column>
-          <el-table-column fixed="right" label="操作" width="150">
-            <template slot-scope="scope">
-              <el-button
-                size="mini"
-                @click="handleEdit(scope.$index, scope.row)"
-                >编辑</el-button
-              >
-              <el-button
-                size="mini"
-                type="danger"
-                @click="handleDelete(scope.$index, scope.row)"
-                >删除</el-button
-              >
-            </template>
-          </el-table-column> -->
         </el-table>
       </el-collapse-item>
     </el-collapse>
@@ -128,14 +108,17 @@
     >
     </el-pagination>
     <el-drawer
-      title="我是标题"
       :visible.sync="drawer"
       direction="btt"
-      size='50%'
+      size="50%"
       :modal="false"
       :before-close="handleClose"
     >
-      <span>我来啦!</span>
+      <div
+        id="fan-chart"
+        style="width: 100%; height: 278px; float: left"
+        v-loading="loading"
+      ></div>
     </el-drawer>
     <el-empty v-if="isEmpty" description="这里一条数据都没有呢"></el-empty>
   </el-main>
@@ -152,6 +135,15 @@ export default {
       detailUserData: [],
       localProductData: [],
       drawer: false,
+      loading: true,
+      fanChart: {
+        chart: "",
+        option: ["购买成功人数", "取消订单人数"],
+        optionData: [
+          { value: 13, name: "购买成功人数" },
+          { value: 19, name: "取消订单人数" },
+        ],
+      },
     };
   },
   mounted() {
@@ -179,9 +171,77 @@ export default {
     },
   },
   methods: {
-    moreInfo() {
+    handleClose() {
       console.log(1);
+      this.drawer = false;
+    },
+    drawChart(product) {
+      // 基于 准备好的DOM 开始画图
+      this.fanChart.chart = this.$echarts.init(
+        document.getElementById("fan-chart")
+      );
+      // 绘制图表
+      this.fanChart.chart.setOption({
+        title: {
+          text: product.name, // 主标题
+          subtext: "", // 副标题
+          x: "center", // x轴对齐方式
+        },
+        tooltip: {
+          trigger: "item",
+          formatter: "{a} <br/>{b} : {c} ({d}%)",
+        },
+        legend: {
+          orient: "vertical",
+          bottom: "bottom",
+          data: this.fanChart.option,
+        },
+        series: [
+          {
+            name: product.name,
+            type: "pie",
+            radius: "50%",
+            center: ["50%", "50%"],
+            data: this.fanChart.optionData,
+            itemStyle: {
+              emphasis: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: "rgba(0,0,0,0.5)",
+              },
+              // color() {
+              //   // 自定义颜色
+              //   let colorList = ["red", "#a1b394"];
+              //   return colorList[params.dataIndex];
+              // },
+            },
+          },
+        ],
+      });
+    },
+    moreInfo(product) {
       this.drawer = true;
+      this.loading = true;
+      this.axios({
+        method: "get",
+        url: "/admin/item/statistics",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+          itemId: product.id,
+        },
+      }).then((response) => {
+        if (response.data.status != 0) {
+          this.MessageBox.alert(response.data.data.message);
+          return;
+        } else {
+          this.fanChart.optionData[0].value = response.data.data.success;
+          this.fanChart.optionData[1].value = response.data.data.fail;
+          this.loading = false;
+        }
+      });
+      this.$nextTick(() => {
+        this.drawChart(product);
+      });
     },
 
     stateFormate(val, state) {

@@ -1,11 +1,11 @@
 <template>
   <el-container class="header">
     <el-header style="text-align: right; font-size: 12px">
-      <el-dropdown>
+      <el-dropdown @command="handleCommand">
         <i class="el-icon-setting" style="margin-right: 15px"></i>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item @click="AdminLogin()">登录</el-dropdown-item>
-          <el-dropdown-item @click="AdminLogout()">注销</el-dropdown-item>
+          <el-dropdown-item command="login">登录</el-dropdown-item>
+          <el-dropdown-item command="logout">注销</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
       <span @click="AdminLogin()">{{
@@ -23,16 +23,59 @@ export default {
     };
   },
   methods: {
+    handleCommand(command) {
+      if (command == "login") {
+        this.AdminLogin();
+      } else if (command == "logout") {
+        this.AdminLogout();
+      }
+    },
     AdminLogin() {
+      if (this.AdminName != "尚未登录") return false;
       this.goLogin();
     },
-    AdminLogout() {},
+    AdminLogout() {
+      console.log(2);
+      if (!window.sessionStorage.getItem("token")) {
+        console.log(1);
+        this.MessageBox.alert("你还没登录呢！");
+        return false;
+      }
+      this.axios({
+        method: "get",
+        url: "/admin/logout",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+        },
+      }).then((response) => {
+        if (response.data.status != 0) {
+          this.MessageBox.alert(response.data.data.message);
+          this.goLogin();
+        } else {
+          window.sessionStorage.removeItem("token");
+          this.goLogin();
+        }
+      });
+    },
   },
   mounted() {
-    if(!window.sessionStorage.getItem('token')){
-      this.goLogin()
+    if (!window.sessionStorage.getItem("token")) {
+      this.goLogin();
+    } else {
+      this.axios({
+        method: "get",
+        url: "/admin/status",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+        },
+      }).then((response) => {
+        if (response.data.status != 0) {
+          this.MessageBox.alert(response.data.data.message);
+        } else {
+          this.AdminName = response.data.data.name;
+        }
+      });
     }
-    else this.AdminName = this.$store.state.adminName;
   },
 };
 </script>
