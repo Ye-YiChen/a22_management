@@ -405,7 +405,7 @@ export default {
       dialogFormVisible2: false,
       dialogFormVisible3: false,
       editInfo: null,
-      editIndex:null,
+      editIndex: null,
       ruleForm: {
         vip: "",
         age: "",
@@ -654,8 +654,8 @@ export default {
             this.form.state == "即将开始"
               ? 0
               : this.form.state == "已经结束"
-              ? 1
-              : 2,
+              ? 2
+              : 1,
           numTime: null,
           numTime1: this.dayjs(this.form.numTime).format("YYYY-MM-DD HH:mm:ss"),
           startTime: null,
@@ -686,8 +686,8 @@ export default {
                 this.form.state == "即将开始"
                   ? 0
                   : this.form.state == "已经结束"
-                  ? 1
-                  : 2,
+                  ? 2
+                  : 1,
             };
           }
         })
@@ -710,8 +710,8 @@ export default {
             this.form.state == "即将开始"
               ? 0
               : this.form.state == "已经结束"
-              ? 1
-              : 2,
+              ? 2
+              : 1,
           numTime: null,
           numTime1: this.dayjs(this.form.numTime).format("YYYY-MM-DD HH:mm:ss"),
           startTime: null,
@@ -742,8 +742,8 @@ export default {
                 this.form.state == "即将开始"
                   ? 0
                   : this.form.state == "已经结束"
-                  ? 1
-                  : 2,
+                  ? 2
+                  : 1,
             };
           }
         })
@@ -808,6 +808,9 @@ export default {
           this.MessageBox.alert(response.data.data.message);
         } else {
           this.tableData = response.data.data;
+          this.tableData.sort((a, b) => {
+            return b.state - a.state;
+          });
           let temp = [];
           for (let i of this.tableData) {
             i.endTime = this.dateFormat(i.endTime);
@@ -815,9 +818,9 @@ export default {
             i.startTime = this.dateFormat(i.startTime);
             if (i.state == 0) {
               i.state = "即将开始";
-            } else if (i.state == 1) {
-              i.state = "已经结束";
             } else if (i.state == 2) {
+              i.state = "已经结束";
+            } else if (i.state == 1) {
               i.state = "正在进行";
             }
             temp.unshift(i);

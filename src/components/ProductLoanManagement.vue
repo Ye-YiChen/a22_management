@@ -813,6 +813,9 @@ export default {
           this.MessageBox.alert(response.data.data.message);
         } else {
           this.tableData = response.data.data;
+          this.tableData.sort((a, b) => {
+            return b.state - a.state;
+          });
           let temp = [];
           for (let i of this.tableData) {
             i.endTime = this.dateFormat(i.endTime);

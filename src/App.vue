@@ -26,7 +26,7 @@ html {
   min-height: 100%;
 }
 body {
-  overflow-y: hidden;
+  // overflow-y: hidden;
   min-height: calc(100% - 18px);
 }
 #app {

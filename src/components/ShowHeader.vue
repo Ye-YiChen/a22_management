@@ -31,7 +31,7 @@ export default {
       }
     },
     AdminLogin() {
-      if (this.AdminName != "尚未登录") return false;
+      if (!this.AdminName) return false;
       this.goLogin();
     },
     AdminLogout() {

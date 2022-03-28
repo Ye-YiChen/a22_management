@@ -1,62 +1,104 @@
 <template>
   <el-main>
-    <el-table
-      :data="localProductData"
-      @expand-change="expandChange"
-      style="width: 100%"
-      v-loading="lpdLoading"
-    >
-      <el-table-column type="expand" >
-        <template slot-scope="scope">
-          <el-table
-            :data="localUserData"
-            style="width: 100%"
-            v-loading="ludLoading[scope.row.id]"
-            @expand-change="expandUserChange"
-          > 
-
-            <el-table-column type="expand">
-              <template :slot-scope="detailUserData">
-                <el-form
-                  label-position="left"
-                  inline
-                  class="demo-table-expand"
-                  v-loading="dudLoading"
-                >
-                  <el-form-item label="用户账号">
-                    <span>{{ detailUserData.id }}</span>
-                  </el-form-item>
-                  <el-form-item label="用户名称">
-                    <span>{{ detailUserData.name }}</span>
-                  </el-form-item>
-                  <el-form-item label="用户性别">
-                    <span>{{ detailUserData ? "男" : "女" }}</span>
-                  </el-form-item>
-                  <el-form-item label="用户年龄">
-                    <span>{{ detailUserData.age }}</span>
-                  </el-form-item>
-                  <el-form-item label="用户等级">
-                    <span>{{ detailUserData.vip }}</span>
-                  </el-form-item>
-
-                  <el-form-item label="用户身份证">
-                    <span>{{ detailUserData.idNum }}</span>
-                  </el-form-item>
-                </el-form>
-              </template>
-            </el-table-column>
-            <!-- <el-table-column type="selection" width="55"></el-table-column> -->
-            <el-table-column prop="id" label="用户账号"></el-table-column>
-            <el-table-column prop="name" label="用户名称"></el-table-column>
-            <el-table-column prop="flag" label="筛选"></el-table-column>
-          </el-table>
+    <el-collapse accordion v-model="activeNames" @change="handleChange">
+      <el-collapse-item
+        v-for="(data, index) in localProductData"
+        :key="index"
+        :name="index + 1"
+      >
+        <template slot="title">
+          <ul class="table-title">
+            <li><span>产品编号：</span>{{ data.id }}</li>
+            <li><span>产品名称：</span>{{ data.name }}</li>
+            <li :class="stateFormate(data.state, 0)">
+              <span>产品状态：</span>{{ stateFormate(data.state, 1) }}
+            </li>
+            <li>
+              <el-button
+                v-if="stateFormate(data.state, 1) == '已经结束'"
+                size="small"
+                type="primary"
+                round
+                @click.stop="moreInfo(data)"
+                >数据监控</el-button
+              >
+            </li>
+          </ul>
         </template>
-      </el-table-column>
+        <el-table
+          :data="localUserData"
+          v-if="!isEmpty"
+          :stripe="true"
+          @current-change="handleCurrentChange"
+          @expand-change="handleExpandChange"
+          max-height="650"
+        >
+          <el-table-column type="expand">
+            <template :slot-scope="detailUserData">
+              <el-form label-position="left" inline class="demo-table-expand">
+                <!-- <el-form-item label="产品编号">
+              <span>{{ props.row.name }}</span>
+            </el-form-item> -->
+                <el-form-item label="用户账号">
+                  <span>{{ detailUserData.id }}</span>
+                </el-form-item>
+                <el-form-item label="用户名称">
+                  <span>{{ detailUserData.name }}</span>
+                </el-form-item>
+                <el-form-item label="用户性别">
+                  <span>{{ detailUserData ? "男" : "女" }}</span>
+                </el-form-item>
+                <el-form-item label="用户年龄">
+                  <span>{{ detailUserData.age }}</span>
+                </el-form-item>
+                <el-form-item label="用户等级">
+                  <span>{{ detailUserData.vip }}</span>
+                </el-form-item>
 
-      <el-table-column label="产品编号" prop="id"></el-table-column>
-      <el-table-column label="产品名称" prop="name"> </el-table-column>
-      <el-table-column label="产品状态" prop="state"></el-table-column>
-    </el-table>
+                <el-form-item label="用户身份证">
+                  <span>{{ detailUserData.idNum }}</span>
+                </el-form-item>
+              </el-form>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="userId" label="用户账号" width="">
+          </el-table-column>
+          <el-table-column prop="userName" label="用户名称" width="">
+          </el-table-column>
+          <el-table-column
+            prop="flag"
+            label="筛选"
+            width="100"
+            :filters="[
+              { text: '有资格', value: '有资格' },
+              { text: '无资格', value: '无资格' },
+              { text: '成功购买', value: '成功购买' },
+            ]"
+            :filter-method="filterflag"
+            filter-placement="bottom-end"
+          >
+            <template slot-scope="scope">
+              <el-tag
+                :type="scope.row.flag == '无资格' ? 'danger' : 'success'"
+                disable-transitions
+                >{{ scope.row.flag }}</el-tag
+              >
+            </template>
+          </el-table-column>
+          <el-table-column align="right">
+            <template slot="header">
+              <input
+                type="text"
+                v-model="searchText"
+                placeholder="用户搜索"
+                class="user-search"
+              />
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-collapse-item>
+    </el-collapse>
 
     <el-pagination
       :hide-on-single-page="true"
@@ -88,14 +130,12 @@ export default {
     return {
       searchText: "",
       searchTimer: null,
+      activeNames: [],
       localUserData: [],
       detailUserData: [],
       localProductData: [],
       drawer: false,
       loading: true,
-      ludLoading: {},
-      dudLoading: true,
-      lpdLoading: true,
       fanChart: {
         chart: "",
         option: ["购买成功人数", "取消订单人数"],
@@ -107,7 +147,6 @@ export default {
     };
   },
   mounted() {
-    this.lpdLoading = true;
     this.axios({
       method: "get",
       url: "/admin/item/deposit",
@@ -115,18 +154,11 @@ export default {
         token: window.sessionStorage.getItem("token"),
       },
     }).then((response) => {
+      console.log(response);
       if (response.data.status != 0) {
         this.MessageBox.alert(response.data.data.message);
       } else {
         this.localProductData = response.data.data;
-        this.localProductData.sort((a, b) => {
-          return b.state - a.state;
-        });
-        for (let i of this.localProductData) {
-          this.ludLoading[i.id] = true;
-        }
-        console.log(this.ludLoading);
-        this.lpdLoading = false;
       }
     });
   },
@@ -139,101 +171,6 @@ export default {
     },
   },
   methods: {
-    expandUserChange(data) {
-      console.log(data);
-      this.detailUserData = {};
-
-      this.dudLoading = true;
-      this.axios({
-        method: "post",
-        url: "/admin/user/info",
-        params: {
-          token: window.sessionStorage.getItem("token"),
-          userId: data.userId,
-        },
-      })
-        .then((response) => {
-          console.log("请求成功");
-          if (response.data.status != 0) {
-            this.MessageBox.alert(response.data.data.message);
-            return;
-          }
-          this.detailUserData = response.data.data;
-          if (this.detailUserData.vip == 0) {
-            this.detailUserData.vip = "大众会员";
-          } else if (this.detailUserData.vip == 1) {
-            this.detailUserData.vip = "黄金会员";
-          } else if (this.detailUserData.vip == 2) {
-            this.detailUserData.vip = "白金会员";
-          } else {
-            this.detailUserData.vip = "钻石会员";
-          }
-          this.dudLoading = false;
-        })
-        .catch((err) => {
-          this.MessageBox.alert(err.message);
-        });
-    },
-    expandChange(data) {
-      console.log(data);
-      // 0 未开始 1 正在进行 2 时间截止 3商品售罄
-      // 如果商品未结束 显示 资格 请求路径
-      this.ludLoading[data.id] = true;
-      console.log("开始转圈" + this.ludLoading[data.id]);
-
-      if (data.state == 0 || data.state == 1) {
-        // 在这里请求具体数据 flag 0 cg  1 sb
-        this.axios({
-          method: "post",
-          url: "/admin/item/user",
-          params: {
-            token: window.sessionStorage.getItem("token"),
-            // itemId:23
-            itemId: data.id,
-          },
-        }).then((response) => {
-          this.localUserData = response.data.data ;
-          for (let i of this.localUserData) {
-            if (i.flag == "0") {
-              i.flag = "有资格";
-            } else {
-              i.flag = "无资格";
-            }
-          }
-          this.ludLoading[data.id] = false;
-
-          console.log("结束了转圈" + this.ludLoading[data.id]);
-        });
-      }
-      // 否则显示 是否购买请求路径
-      else {
-        this.axios({
-          method: "post",
-          url: "/admin/item/user/success",
-          params: {
-            token: window.sessionStorage.getItem("token"),
-            // itemId:23
-            itemId: data.id,
-          },
-        }).then((response) => {
-          if (response.data.status != 0) {
-            this.MessageBox.alert(response.data.data.message);
-            return;
-          }
-          this.localUserData = response.data.data;
-          // userName
-          for (let i of this.localUserData) {
-            i.userName = i.name;
-          }
-          for (let i of this.localUserData) {
-            i.flag = "成功购买";
-          }
-          this.ludLoading[data.id] = false;
-
-          console.log("结束了转圈" + this.ludLoading[data.id]);
-        });
-      }
-    },
     handleClose() {
       console.log(1);
       this.drawer = false;
@@ -247,7 +184,7 @@ export default {
       this.fanChart.chart.setOption({
         title: {
           text: product.name, // 主标题
-          subtext: "", // 副标题
+          subtext: '产品编号: '+product.id, // 副标题
           x: "center", // x轴对齐方式
         },
         tooltip: {
@@ -266,23 +203,37 @@ export default {
             radius: "50%",
             center: ["50%", "50%"],
             data: this.fanChart.optionData,
+            label: {
+              normal: {
+                formatter: "{b}:{c}: ({d}%)",
+                textStyle: {
+                  fontWeight: "normal",
+                  fontSize: 15,
+                },
+              },
+            },
             itemStyle: {
               emphasis: {
                 shadowBlur: 10,
                 shadowOffsetX: 0,
                 shadowColor: "rgba(0,0,0,0.5)",
               },
-              // color() {
-              //   // 自定义颜色
-              //   let colorList = ["red", "#a1b394"];
-              //   return colorList[params.dataIndex];
-              // },
+              color(params) {
+                // 自定义颜色
+                let colorList = [ "#409eff","#f56c6c"];
+                return colorList[params.dataIndex];
+              },
             },
           },
         ],
       });
     },
     moreInfo(product) {
+      // 销毁已有图表
+      if (this.fanChart.chart) {
+        this.fanChart.chart.dispose();
+      }
+
       this.drawer = true;
       this.loading = true;
       this.axios({
@@ -297,19 +248,13 @@ export default {
           this.MessageBox.alert(response.data.data.message);
           return;
         } else {
-          console.log(response);
-          this.$set(this.fanChart.optionData, 0, {
-            value: response.data.data.success,
-            name: "购买成功人数",
-          });
-          this.$set(this.fanChart.optionData, 1, {
-            value: response.data.data.fail,
-            name: "购买失败人数",
-          });
+          console.log(response.data.data);
+          this.fanChart.optionData[0].value = response.data.data.success;
+          this.fanChart.optionData[1].value = response.data.data.fail;
+          this.loading = false;
           this.$nextTick(() => {
             this.drawChart(product);
           });
-          this.loading = false;
         }
       });
     },
@@ -335,25 +280,133 @@ export default {
         }
       }
     },
+    handleExpandChange(data) {
+      this.detailUserData = {};
+      this.axios({
+        method: "post",
+        url: "/admin/user/info",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+          userId: data.userId,
+        },
+      })
+        .then((response) => {
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+            return;
+          }
+          console.log(response);
+          this.detailUserData = response.data.data;
+          if (this.detailUserData.vip == 0) {
+            this.detailUserData.vip = "大众会员";
+          } else if (this.detailUserData.vip == 1) {
+            this.detailUserData.vip = "黄金会员";
+          } else if (this.detailUserData.vip == 2) {
+            this.detailUserData.vip = "白金会员";
+          } else {
+            this.detailUserData.vip = "钻石会员";
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
+    },
     filterflag(value, row) {
       return row.flag === value;
+    },
+    handleChange(val) {
+      // 展开 最外层数据 this.activeNames 时触发
+      console.log(val);
+      this.localUserData = [];
+    },
+    handleCurrentChange(val) {
+      // 点击 某条具体数据时触发
+      console.log(2);
+      this.currentRow = val;
     },
   },
   watch: {
     searchText(newValue) {
-      console.log(1);
-      console.log(newValue);
+      console.log("enter search");
       clearInterval(this.searchTimer);
       this.searchTimer = setInterval(() => {
         // 进行一次筛选
-        for (let i = 0; i < this.showUserData.length; i++) {
-          this.showUserData.filter(
+        console.log(this.localUserData);
+        for (let i = 0; i < this.localUserData.length; i++) {
+          this.localUserData.filter(
             (data) =>
               !newValue ||
               data.name.toLowerCase().includes(newValue.toLowerCase())
           );
         }
+        clearInterval(this.searchTimer);
       }, 300);
+    },
+    activeNames: {
+      deep: true,
+      handler(newValue) {
+        if (newValue == 0) {
+          return;
+        }
+        let index = newValue - 1;
+        // 0 未开始 1 正在进行 2 时间截止 3商品售罄
+        // 如果商品未结束 显示 资格 请求路径
+        if (
+          this.localProductData[index].state == 0 ||
+          this.localProductData[index].state == 1
+        ) {
+          // 在这里请求具体数据 flag 0 cg  1 sb
+          this.axios({
+            method: "post",
+            url: "/admin/item/user",
+            params: {
+              token: window.sessionStorage.getItem("token"),
+              // itemId:23
+              itemId: this.localProductData[index].id,
+            },
+          }).then((response) => {
+            console.log(response);
+            setTimeout(() => {
+              this.localUserData = response.data.data;
+              for (let i of this.localUserData) {
+                if (i.flag == "0") {
+                  i.flag = "有资格";
+                } else {
+                  i.flag = "无资格";
+                }
+              }
+            }, 200);
+          });
+        }
+        // 否则显示 是否购买请求路径
+        else {
+          this.axios({
+            method: "post",
+            url: "/admin/item/user/success",
+            params: {
+              token: window.sessionStorage.getItem("token"),
+              // itemId:23
+              itemId: this.localProductData[index].id,
+            },
+          }).then((response) => {
+            if (response.data.status != 0) {
+              this.MessageBox.alert(response.data.data.message);
+              return;
+            }
+            console.log(response);
+            setTimeout(() => {
+              this.localUserData = response.data.data;
+              // userName
+              for (let i of this.localUserData) {
+                i.userName = i.name;
+              }
+              for (let i of this.localUserData) {
+                i.flag = "成功购买";
+              }
+            }, 200);
+          });
+        }
+      },
     },
   },
 };
