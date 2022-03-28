@@ -203,23 +203,37 @@ export default {
             radius: "50%",
             center: ["50%", "50%"],
             data: this.fanChart.optionData,
+            label: {
+              normal: {
+                formatter: "{b}:{c}: ({d}%)",
+                textStyle: {
+                  fontWeight: "normal",
+                  fontSize: 15,
+                },
+              },
+            },
             itemStyle: {
               emphasis: {
                 shadowBlur: 10,
                 shadowOffsetX: 0,
                 shadowColor: "rgba(0,0,0,0.5)",
               },
-              // color() {
-              //   // 自定义颜色
-              //   let colorList = ["red", "#a1b394"];
-              //   return colorList[params.dataIndex];
-              // },
+              color(params) {
+                // 自定义颜色
+                let colorList = ["#f56c6c", "#409EFF"];
+                return colorList[params.dataIndex];
+              },
             },
           },
         ],
       });
     },
     moreInfo(product) {
+      // 销毁已有图表
+      if (this.fanChart.chart) {
+        this.fanChart.chart.dispose();
+      }
+
       this.drawer = true;
       this.loading = true;
       this.axios({
@@ -234,13 +248,14 @@ export default {
           this.MessageBox.alert(response.data.data.message);
           return;
         } else {
+          console.log(response.data.data);
           this.fanChart.optionData[0].value = response.data.data.success;
           this.fanChart.optionData[1].value = response.data.data.fail;
           this.loading = false;
+          this.$nextTick(() => {
+            this.drawChart(product);
+          });
         }
-      });
-      this.$nextTick(() => {
-        this.drawChart(product);
       });
     },
 
