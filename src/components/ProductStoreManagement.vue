@@ -198,9 +198,9 @@
         </el-form-item>
         <el-form-item label="风险等级" prop="risk">
           <el-select v-model="form.risk" autocomplete="off">
-            <el-option label="低风险" value="low" />
-            <el-option label="中风险" value="mid" />
-            <el-option label="高风险" value="high" />
+            <el-option label="低风险" value="低风险" />
+            <el-option label="中风险" value="中风险" />
+            <el-option label="高风险" value="高风险" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -279,9 +279,9 @@
         </el-form-item>
         <el-form-item label="风险等级" prop="risk">
           <el-select v-model="form.risk" autocomplete="off">
-            <el-option label="低风险" value="low" />
-            <el-option label="中风险" value="mid" />
-            <el-option label="高风险" value="high" />
+            <el-option label="低风险" value="低风险" />
+            <el-option label="中风险" value="中风险" />
+            <el-option label="高风险" value="高风险" />
           </el-select>
         </el-form-item>
       </el-form>
