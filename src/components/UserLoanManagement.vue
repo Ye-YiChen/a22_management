@@ -113,12 +113,13 @@
       size="50%"
       :modal="false"
       :before-close="handleClose"
+      v-loading="loading"
     >
       <div
-        id="fan-chart"
-        style="width: 100%; height: 278px; float: left"
-        v-loading="loading"
+        id="histogram-chart"
+        style="width: 50%; height: 300px; float: left"
       ></div>
+      <div id="pie-chart" style="width: 50%; height: 300px; float: left"></div>
     </el-drawer>
     <el-empty v-if="isEmpty" description="这里一条数据都没有呢"></el-empty>
   </el-main>
@@ -142,6 +143,18 @@ export default {
         optionData: [
           { value: 13, name: "购买成功人数" },
           { value: 19, name: "取消订单人数" },
+        ],
+      },
+      histogramChart: {
+        chart: "",
+        option: ["符合条件人数","已申请人数", "初筛通过人数","总点击人数","未付款人数","付款人数"],
+        optionData: [
+          { value: 13, name: "符合条件人数" },
+          { value: 19, name: "已申请人数" },
+          { value: 19, name: "初筛通过人数" },
+          { value: 19, name: "总点击人数" },
+          { value: 19, name: "未付款人数" },
+          { value: 19, name: "付款人数" },
         ],
       },
     };
@@ -175,10 +188,10 @@ export default {
       console.log(1);
       this.drawer = false;
     },
-    drawChart(product) {
+    drawFanChart(product) {
       // 基于 准备好的DOM 开始画图
       this.fanChart.chart = this.$echarts.init(
-        document.getElementById("fan-chart")
+        document.getElementById("pie-chart")
       );
       // 绘制图表
       this.fanChart.chart.setOption({
@@ -228,10 +241,68 @@ export default {
         ],
       });
     },
+    drawHistogramChart(product) {
+      // 基于 准备好的DOM 开始画图
+      this.histogramChart.chart = this.$echarts.init(
+        document.getElementById("histogram-chart")
+      );
+      // 绘制图表
+      this.histogramChart.chart.setOption({
+        title: {
+          text: product.name, // 主标题
+          subtext: "", // 副标题
+          x: "left", // x轴对齐方式
+        },
+        tooltip: {
+          trigger: "item",
+          formatter: "{a} <br/>{b} : {c} ({d}%)",
+        },
+        legend: {
+          orient: "vertical",
+          bottom: "bottom",
+          data: this.histogramChart.option,
+        },
+        xAxis:{
+          data: this.histogramChart.option,
+        },
+        yAxis:{},
+        series: [
+          {
+            name: this.histogramChart.option,
+            type: "bar",
+            radius: "50%",
+            center: ["50%", "50%"],
+            data: this.histogramChart.optionData,
+            label: {
+              normal: {
+                formatter: "{b}:{c}: ({d}%)",
+                textStyle: {
+                  fontWeight: "normal",
+                  fontSize: 15,
+                },
+              },
+            },
+            itemStyle: {
+              emphasis: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: "rgba(0,0,0,0.5)",
+              },
+              color(params) {
+                // 自定义颜色
+                let colorList = ["#f56c6c", "#409EFF"];
+                return colorList[params.dataIndex];
+              },
+            },
+          },
+        ],
+      });
+    },
     moreInfo(product) {
       // 销毁已有图表
       if (this.fanChart.chart) {
         this.fanChart.chart.dispose();
+        this.histogramChart.chart.dispose();
       }
 
       this.drawer = true;
@@ -253,7 +324,7 @@ export default {
           this.fanChart.optionData[1].value = response.data.data.fail;
           this.loading = false;
           this.$nextTick(() => {
-            this.drawChart(product);
+            this.drawFanChart(product);
           });
         }
       });
