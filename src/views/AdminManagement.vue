@@ -38,6 +38,13 @@
             >
               <el-menu-item index="2-2">存款产品</el-menu-item>
             </router-link>
+            <router-link
+              to="/management/product/template"
+              class="router"
+              active-class="current"
+            >
+              <el-menu-item index="2-3">产品规则</el-menu-item>
+            </router-link>
           </el-menu-item-group>
         </el-submenu>
       </el-menu>

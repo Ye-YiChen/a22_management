@@ -147,15 +147,15 @@ export default {
       },
       histogramChart: {
         chart: "",
-        option: ["符合条件人数","已申请人数", "初筛通过人数","总点击人数","未付款人数","付款人数"],
-        optionData: [
-          { value: 13, name: "符合条件人数" },
-          { value: 19, name: "已申请人数" },
-          { value: 19, name: "初筛通过人数" },
-          { value: 19, name: "总点击人数" },
-          { value: 19, name: "未付款人数" },
-          { value: 19, name: "付款人数" },
+        option: [
+          "符合条件人数",
+          "已申请人数",
+          "初筛通过人数",
+          "总点击人数",
+          // "未付款人数",
+          // "付款人数",
         ],
+        optionData: [],
       },
     };
   },
@@ -218,10 +218,11 @@ export default {
             data: this.fanChart.optionData,
             label: {
               normal: {
-                formatter: "{b}:{c}: ({d}%)",
+                // formatter: "{b}:{c}: <br/> ({d}%)",
+                formatter: "{c}人 : ({d}%)",
                 textStyle: {
                   fontWeight: "normal",
-                  fontSize: 15,
+                  fontSize: 12,
                 },
               },
             },
@@ -251,46 +252,39 @@ export default {
         title: {
           text: product.name, // 主标题
           subtext: "", // 副标题
-          x: "left", // x轴对齐方式
+          x: "center", // x轴对齐方式
         },
         tooltip: {
           trigger: "item",
-          formatter: "{a} <br/>{b} : {c} ({d}%)",
+          formatter: "{b} : {c}",
         },
-        legend: {
-          orient: "vertical",
-          bottom: "bottom",
+        xAxis: {
+          type: "category",
           data: this.histogramChart.option,
         },
-        xAxis:{
-          data: this.histogramChart.option,
+        yAxis: {
+          type: "value",
         },
-        yAxis:{},
         series: [
           {
             name: this.histogramChart.option,
             type: "bar",
-            radius: "50%",
-            center: ["50%", "50%"],
-            data: this.histogramChart.optionData,
-            label: {
-              normal: {
-                formatter: "{b}:{c}: ({d}%)",
-                textStyle: {
-                  fontWeight: "normal",
-                  fontSize: 15,
-                },
-              },
+            showBackground: true,
+            backgroundStyle: {
+              color: "rgba(180, 180, 180, 0.2)",
             },
+            data: this.histogramChart.optionData,
             itemStyle: {
-              emphasis: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: "rgba(0,0,0,0.5)",
-              },
               color(params) {
                 // 自定义颜色
-                let colorList = ["#f56c6c", "#409EFF"];
+                let colorList = [
+                  "#f5e9be",
+                  "#ffe184",
+                  "#f58653",
+                  "#174c4f",
+                  "#207178",
+                  "#91c46c",
+                ];
                 return colorList[params.dataIndex];
               },
             },
@@ -320,11 +314,28 @@ export default {
           return;
         } else {
           console.log(response.data.data);
+
+          /* option: [
+          "符合条件人数",
+          "已申请人数",
+          "初筛通过人数",
+          "总点击人数",
+          "未付款人数",
+          "付款人数",
+        ], */
           this.fanChart.optionData[0].value = response.data.data.success;
           this.fanChart.optionData[1].value = response.data.data.fail;
+          this.histogramChart.optionData = [
+            0,
+            0,
+            0,
+            response.data.data.hits,
+          ];
+          console.log(this.histogramChart.optionData);
           this.loading = false;
           this.$nextTick(() => {
             this.drawFanChart(product);
+            this.drawHistogramChart(product);
           });
         }
       });

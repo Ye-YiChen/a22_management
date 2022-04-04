@@ -6,6 +6,7 @@ import ProductStoreManagement from '../components/ProductStoreManagement.vue'
 import ProductLoanManagement from '../components/ProductLoanManagement.vue'
 import AdminLogin from '../views/AdminLogin.vue'
 import AdminManagement from '../views/AdminManagement.vue'
+import ProductTemplateManagement from '../components/ProductTemplateManagement.vue'
 Vue.use(VueRouter)
 
 const routes = [
@@ -45,6 +46,11 @@ const routes = [
         path: 'product/loan',
         name: 'Loan',
         component: ProductLoanManagement
+      },
+      {
+        path: 'product/template',
+        name: 'Template',
+        component: ProductTemplateManagement
       }
 
 

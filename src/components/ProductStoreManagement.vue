@@ -78,7 +78,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column sortable prop="state" label="规则配置">
+      <el-table-column prop="state" sortable label="规则配置">
         <template slot-scope="scope">
           <el-button
             size="small"
@@ -86,7 +86,7 @@
             round
             plain
             :disabled="scope.row.state == '已经结束' ? true : false"
-            @click="ruleEdit(scope.$index, scope.row)"
+            @click="ruleEdit(scope.$index, scope.row, scope.row.state)"
             >配置规则</el-button
           >
         </template>
@@ -297,23 +297,38 @@
         label-position="left"
         :rules="rules"
       >
-        <!-- 这里是一个 年龄选择器 可能后来话需要 -->
-        <!-- <el-form-item label="年龄（岁）" prop="age">
-          <el-select v-model="ruleForm.age" placeholder="请选择" size="small">
-            <el-option label="全部" value="全部"> </el-option>
-            <el-option label="18-28" value="smaller"></el-option>
-            <el-option label="29-40" value="bigger"> </el-option>
-            <el-option label="41-65" value="bigger"> </el-option>
-            <el-option label="65以上" value="bigger"> </el-option>
+        <el-form-item label="模板选择" prop="template">
+          <el-select v-model="ruleForm.template" placeholder="请选择">
+            <el-option
+              v-for="template in templateData"
+              :label="template.templateName"
+              :value="template.id"
+              :key="template.id"
+            ></el-option>
           </el-select>
-        </el-form-item> -->
-
+        </el-form-item>
+        <!-- 这里是一个 年龄选择器 可能后来话需要 -->
+        <el-form-item label="年龄（岁）" prop="age">
+          <el-input-number
+            :min="0"
+            :step="1"
+            v-model="ruleForm.age"
+            autocomplete="off"
+          ></el-input-number>
+        </el-form-item>
+        <el-form-item label="性别" prop="sex">
+          <el-radio-group v-model="ruleForm.sex">
+            <el-radio :label="2">不限</el-radio>
+            <el-radio :label="1">男</el-radio>
+            <el-radio :label="0">女</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="地区" prop="area">
           <el-cascader
             size="small"
             :options="options"
             v-model="ruleForm.area"
-            @change="handleChange"
+            @change="handleChange(0)"
             multiple
           >
           </el-cascader>
@@ -347,6 +362,9 @@
             <el-option label="农民" value="农民"> </el-option>
           </el-select>
         </el-form-item>
+        <!-- <el-form-item label="职业" prop="job">
+          <el-checkbox v-model="checked">保存为模板</el-checkbox>
+        </el-form-item> -->
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancelRuleInfo()">取 消</el-button>
@@ -369,7 +387,7 @@
 // import { MessageBox } from "element-ui";
 // Vue.use(Cascader)
 import {
-  regionData,
+  regionDataPlus,
   // CodeToText,
   // TextToCode,
 } from "element-china-area-data";
@@ -401,12 +419,17 @@ export default {
       currentRow: null, //
       isPagination: false,
       isLoading: null,
-      dialogFormVisible1: false,
-      dialogFormVisible2: false,
-      dialogFormVisible3: false,
-      editInfo: null,
+      dialogFormVisible1: false, // 产品编辑
+      dialogFormVisible2: false, // 产品新增
+      dialogFormVisible3: false, // 规则配置
+      dialogFormVisible4: false, // 新增规则
+      templateData: [],
       editIndex: null,
+      editInfo: null,
       ruleForm: {
+        template: "",
+        // 0 女生 1男生 2 不限
+        sex: 2,
         vip: "",
         age: "",
         area: [],
@@ -414,8 +437,8 @@ export default {
         money: "",
       },
       form: {},
-      options: [{ label: "不限", value: "不限" }, ...regionData],
-
+      options: [...regionDataPlus],
+      templateForm: {},
       // 设置输入检测
       rules: {
         name: [{ validator: checkExample, required: true, trigger: "blur" }],
@@ -489,7 +512,7 @@ export default {
       if (code == "") return [""];
       let s1 = code.substr(0, 2),
         s2 = code.substr(2, 2),
-        s3 = code.substr(3, 2);
+        s3 = code.substr(4, 2);
       if (s2 == "00") {
         return [code, ""];
       }
@@ -507,18 +530,61 @@ export default {
         money: "",
       };
     },
-    handleChange() {
-      if (this.ruleForm.area) {
-        if (this.ruleForm.area[0] == "不限") {
-          this.ruleForm.area = "不限";
-        } else
+    handleChange(value) {
+      // 0 修改rule 1 修改template
+      if (this.ruleForm.area && value == 0) {
+        if (this.ruleForm.area[this.ruleForm.area.length - 1] != "")
           this.ruleForm.area =
             this.ruleForm.area[this.ruleForm.area.length - 1];
-      }
+        else if (this.ruleForm.area[this.ruleForm.area.length - 2] != "")
+          this.ruleForm.area =
+            this.ruleForm.area[this.ruleForm.area.length - 2];
+        else if (this.ruleForm.area[this.ruleForm.area.length - 3] != "")
+          this.ruleForm.area =
+            this.ruleForm.area[this.ruleForm.area.length - 3];
+      } else this.ruleForm.area = "";
+      console.log(this.ruleForm.area);
+      if (this.templateForm.area && value == 1) {
+        if (this.templateForm.area[this.templateForm.area.length - 1] != "")
+          this.templateForm.area =
+            this.templateForm.area[this.templateForm.area.length - 1];
+        else if (
+          this.templateForm.area[this.templateForm.area.length - 2] != ""
+        )
+          this.templateForm.area =
+            this.templateForm.area[this.templateForm.area.length - 2];
+        else if (
+          this.templateForm.area[this.templateForm.area.length - 3] != ""
+        )
+          this.templateForm.area =
+            this.templateForm.area[this.templateForm.area.length - 3];
+      } else this.templateForm.area = "";
     },
     ruleEdit(index, info) {
-      this.editInfo = info;
       // 数据回显
+      this.editInfo = info;
+      this.axios({
+        method: "get",
+        url: "/admin/rule/template/",
+        params: {
+          token: window.sessionStorage.getItem("token"),
+        },
+      })
+        .then((response) => {
+          if (response.data.data == null) {
+            this.dialogFormVisible3 = true;
+            return;
+          }
+          if (response.data.status != 0) {
+            this.MessageBox.alert(response.data.data.message);
+          } else {
+            this.templateData = response.data.data;
+            this.dialogFormVisible3 = true;
+          }
+        })
+        .catch((err) => {
+          this.MessageBox.alert(err.message);
+        });
       this.axios({
         method: "get",
         url: "admin/item/rule/select",
@@ -564,6 +630,16 @@ export default {
       if (typeof this.ruleForm.area != "string") {
         this.ruleForm.area = this.ruleForm.area[this.ruleForm.area.length - 1];
       }
+      let vip = 0;
+      if (this.ruleForm.vip == "黄金会员") {
+        vip = 1;
+      }
+      if (this.ruleForm.vip == "白金会员") {
+        vip = 2;
+      }
+      if (this.ruleForm.vip == "钻石会员") {
+        vip = 3;
+      }
       this.axios({
         method: "get",
         url: "/admin/item/rule/config",
@@ -573,7 +649,7 @@ export default {
           itemName: this.editInfo.name,
           ...this.ruleForm,
           money: this.ruleForm.money * 10000,
-          age: 0,
+          vip,
         },
       })
         .then((response) => {
@@ -591,7 +667,7 @@ export default {
     },
     addProduct() {
       this.form = {
-        flag: 1,
+        flag: 0,
         state: "即将开始",
       };
       this.dialogFormVisible2 = true;
@@ -624,7 +700,6 @@ export default {
         });
     },
     handleEdit(index) {
-      // console.log(index,info);
       this.dialogFormVisible1 = true;
       this.editIndex = index;
       this.form = {
@@ -654,8 +729,8 @@ export default {
             this.form.state == "即将开始"
               ? 0
               : this.form.state == "已经结束"
-              ? 2
-              : 1,
+              ? 1
+              : 2,
           numTime: null,
           numTime1: this.dayjs(this.form.numTime).format("YYYY-MM-DD HH:mm:ss"),
           startTime: null,
@@ -686,8 +761,8 @@ export default {
                 this.form.state == "即将开始"
                   ? 0
                   : this.form.state == "已经结束"
-                  ? 2
-                  : 1,
+                  ? 1
+                  : 2,
             };
           }
         })
@@ -710,8 +785,8 @@ export default {
             this.form.state == "即将开始"
               ? 0
               : this.form.state == "已经结束"
-              ? 2
-              : 1,
+              ? 1
+              : 2,
           numTime: null,
           numTime1: this.dayjs(this.form.numTime).format("YYYY-MM-DD HH:mm:ss"),
           startTime: null,
@@ -742,8 +817,8 @@ export default {
                 this.form.state == "即将开始"
                   ? 0
                   : this.form.state == "已经结束"
-                  ? 2
-                  : 1,
+                  ? 1
+                  : 2,
             };
           }
         })
@@ -795,6 +870,7 @@ export default {
   mounted() {
     document.getElementsByTagName("html")[0].style.overflowY = "auto";
     this.isLoading = true;
+
     this.axios({
       method: "get",
       url: "/admin/item/deposit",
@@ -818,9 +894,9 @@ export default {
             i.startTime = this.dateFormat(i.startTime);
             if (i.state == 0) {
               i.state = "即将开始";
-            } else if (i.state == 2) {
-              i.state = "已经结束";
             } else if (i.state == 1) {
+              i.state = "已经结束";
+            } else if (i.state == 2) {
               i.state = "正在进行";
             }
             temp.unshift(i);
@@ -844,7 +920,27 @@ export default {
       }
     }) */
   },
-  filters: {},
+  watch: {
+    "ruleForm.template"(newValue) {
+      console.log();
+      console.log(newValue);
+      for (let i of this.templateData) {
+        if (i.id == newValue) {
+          let vip = "大众会员";
+          if (i.vip == 1) vip = "黄金会员";
+          else if (i.vip == 2) vip = "白金会员";
+          else if (i.vip == 3) vip = "钻石会员";
+
+          this.ruleForm = {
+            ...i,
+            template: i.id,
+            vip,
+            money: i.money / 10000,
+          };
+        }
+      }
+    },
+  },
 };
 </script>
 

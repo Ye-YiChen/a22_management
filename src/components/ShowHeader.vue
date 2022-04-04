@@ -69,6 +69,7 @@ export default {
           token: window.sessionStorage.getItem("token"),
         },
       }).then((response) => {
+        // console.log(response); 
         if (response.data.status != 0) {
           this.MessageBox.alert(response.data.data.message);
         } else {
